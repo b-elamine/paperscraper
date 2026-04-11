@@ -1,0 +1,2 @@
+scholarly>=1.7
+fake-useragent>=1.4
