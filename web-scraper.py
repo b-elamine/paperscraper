@@ -133,13 +133,13 @@ def scrape(args):
     print(f"\nSearching Google Scholar for: '{args.keywords}'{year_info}")
     print(f"Target: {args.pages} page(s) (~{target} results)\n")
 
-    query_kwargs = {"keywords": args.keywords}
+    query_kwargs = {}
     if args.year_low:
         query_kwargs["year_low"] = args.year_low
     if args.year_high:
         query_kwargs["year_high"] = args.year_high
 
-    query = scholarly.search_pubs(**query_kwargs)
+    query = scholarly.search_pubs(args.keywords, **query_kwargs)
 
     results = []
 
