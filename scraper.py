@@ -115,7 +115,7 @@ def scrape_pages(keywords, pages, lang=None, year_low=None, year_high=None,
                  min_delay=8.0, max_delay=15.0):
     """
     Generator that scrapes one page at a time and yields (page_num, records).
-    Allows callers to stream progress as each page completes.
+    Delay happens AFTER yielding so the caller can send data before waiting.
     """
     if not lang:
         lang = detect_lang()
@@ -123,13 +123,15 @@ def scrape_pages(keywords, pages, lang=None, year_low=None, year_high=None,
     session = requests.Session()
 
     for page in range(pages):
-        time.sleep(random.uniform(min_delay, max_delay))
         url     = build_url(keywords, page, lang, year_low, year_high)
         html    = fetch_page(url, session)
         records = parse_page(html)
         if not records:
             return
         yield page + 1, records
+        # Delay after yielding, before next page
+        if page < pages - 1:
+            time.sleep(random.uniform(min_delay, max_delay))
 
 
 def run_scrape(keywords, pages, lang=None, year_low=None, year_high=None,
