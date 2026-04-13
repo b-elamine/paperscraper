@@ -42,7 +42,7 @@ def build_url(keywords, page, lang, year_low=None, year_high=None):
     return f"{BASE_URL}?{urlencode(params)}"
 
 
-def fetch_page(url, session):
+def fetch_page(url, session, retries=3, base_wait=10):
     headers = {
         "User-Agent":      random.choice(USER_AGENTS),
         "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -51,9 +51,16 @@ def fetch_page(url, session):
         "Connection":      "keep-alive",
         "DNT":             "1",
     }
-    response = session.get(url, headers=headers, timeout=15)
-    response.raise_for_status()
-    return response.text
+    for attempt in range(1, retries + 1):
+        response = session.get(url, headers=headers, timeout=15)
+        if response.status_code == 429:
+            if attempt == retries:
+                response.raise_for_status()
+            wait = base_wait * attempt + random.uniform(0, 5)
+            time.sleep(wait)
+            continue
+        response.raise_for_status()
+        return response.text
 
 
 def parse_page(html):
@@ -104,33 +111,35 @@ def parse_page(html):
     return results
 
 
-def run_scrape(keywords, pages, lang=None, year_low=None, year_high=None,
-               min_delay=3.0, max_delay=6.0):
+def scrape_pages(keywords, pages, lang=None, year_low=None, year_high=None,
+                 min_delay=8.0, max_delay=15.0):
     """
-    Run the scraper and return a list of result dicts.
-    Raises RuntimeError on CAPTCHA, requests.HTTPError on network issues.
+    Generator that scrapes one page at a time and yields (page_num, records).
+    Allows callers to stream progress as each page completes.
     """
     if not lang:
         lang = detect_lang()
 
-    session   = requests.Session()
-    all_results = []
-    index     = 1
+    session = requests.Session()
 
     for page in range(pages):
+        time.sleep(random.uniform(min_delay, max_delay))
         url     = build_url(keywords, page, lang, year_low, year_high)
         html    = fetch_page(url, session)
         records = parse_page(html)
-
         if not records:
-            break
+            return
+        yield page + 1, records
 
+
+def run_scrape(keywords, pages, lang=None, year_low=None, year_high=None,
+               min_delay=8.0, max_delay=15.0):
+    all_results = []
+    index       = 1
+    for _, records in scrape_pages(keywords, pages, lang, year_low, year_high,
+                                   min_delay, max_delay):
         for record in records:
             record["index"] = index
             all_results.append(record)
             index += 1
-
-        if page < pages - 1:
-            time.sleep(random.uniform(min_delay, max_delay))
-
     return all_results

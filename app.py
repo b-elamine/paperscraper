@@ -1,11 +1,20 @@
 import csv
 import io
+import json
+import base64
 
 from flask import Flask, Response, render_template, request, jsonify
 
-from scraper import run_scrape
+from scraper import run_scrape, scrape_pages
 
 app = Flask(__name__)
+
+
+def get_lang(form_lang):
+    lang = form_lang.strip() if form_lang else ""
+    if not lang:
+        lang = request.accept_languages.best[0][:2] if request.accept_languages else "en"
+    return lang
 
 
 @app.route("/")
@@ -13,59 +22,49 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/scrape", methods=["POST"])
-def scrape():
-    keywords = request.form.get("keywords", "").strip()
-    if not keywords:
-        return jsonify({"error": "Keywords are required."}), 400
+@app.route("/scrape-stream")
+def scrape_stream():
+    keywords  = request.args.get("keywords", "").strip()
+    pages     = max(1, min(int(request.args.get("pages", 10)), 100))
+    year_low  = request.args.get("year_low",  "").strip() or None
+    year_high = request.args.get("year_high", "").strip() or None
+    lang      = get_lang(request.args.get("lang", ""))
 
-    try:
-        pages    = int(request.form.get("pages", 10))
-        year_low = request.form.get("year_low", "").strip() or None
-        year_high= request.form.get("year_high", "").strip() or None
-        # Use provided region or fall back to browser's Accept-Language
-        lang = request.form.get("lang", "").strip()
-        if not lang:
-            lang = request.accept_languages.best[0][:2] if request.accept_languages else "en"
+    year_low  = int(year_low)  if year_low  else None
+    year_high = int(year_high) if year_high else None
 
-        pages    = max(1, min(pages, 100))
-        year_low = int(year_low)  if year_low  else None
-        year_high= int(year_high) if year_high else None
-    except ValueError as e:
-        return jsonify({"error": f"Invalid input: {e}"}), 400
+    def generate():
+        all_results = []
+        index = 1
+        try:
+            for page_num, records in scrape_pages(keywords, pages, lang, year_low, year_high):
+                for record in records:
+                    record["index"] = index
+                    all_results.append(record)
+                    index += 1
+                    yield f"data: {json.dumps({'type': 'paper', 'page': page_num, 'total': pages, 'title': record['title'], 'count': len(all_results)})}\n\n"
 
-    try:
-        records = run_scrape(
-            keywords=keywords,
-            pages=pages,
-            lang=lang,
-            year_low=year_low,
-            year_high=year_high,
-        )
-    except RuntimeError as e:
-        return jsonify({"error": str(e)}), 503
-    except Exception as e:
-        return jsonify({"error": f"Scraping failed: {e}"}), 500
+            if not all_results:
+                yield f"data: {json.dumps({'type': 'error', 'message': 'No results found. Try different keywords or a wider year range.'})}\n\n"
+                return
 
-    if not records:
-        return jsonify({"error": "No results found. Try different keywords or a wider year range."}), 404
+            # Build CSV and encode as base64 to send in the final event
+            output = io.StringIO()
+            fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(all_results)
+            csv_b64   = base64.b64encode(output.getvalue().encode()).decode()
+            safe_name = keywords.replace(" ", "_")[:40]
+            yield f"data: {json.dumps({'type': 'done', 'csv': csv_b64, 'filename': f'scholar_{safe_name}.csv', 'count': len(all_results)})}\n\n"
 
-    # Build CSV in memory
-    output = io.StringIO()
-    fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
-    writer.writeheader()
-    writer.writerows(records)
-    output.seek(0)
+        except RuntimeError as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Scraping failed: {e}'})}\n\n"
 
-    safe_name = keywords.replace(" ", "_")[:40]
-    filename  = f"scholar_{safe_name}.csv"
-
-    return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
-    )
+    return Response(generate(), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 if __name__ == "__main__":

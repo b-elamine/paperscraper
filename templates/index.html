@@ -143,6 +143,49 @@
     .status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
     .status.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
+    .progress-feed {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+    }
+
+    .progress-feed .progress-bar-wrap {
+      width: 100%;
+      background: #d1fae5;
+      border-radius: 99px;
+      height: 6px;
+      margin-bottom: 0.6rem;
+      overflow: hidden;
+    }
+
+    .progress-feed .progress-bar {
+      height: 6px;
+      background: #16a34a;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .progress-feed .progress-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #15803d;
+      margin-bottom: 0.5rem;
+    }
+
+    .titles-feed {
+      font-size: 0.72rem;
+      color: #166534;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 0.25rem;
+      min-height: 1.1em;
+    }
+
     .note {
       margin-top: 1.5rem;
       font-size: 0.78rem;
@@ -201,7 +244,7 @@
       <div class="form-group">
         <label for="lang">Google Scholar region <span class="hint">(optional)</span></label>
         <input type="text" id="lang" name="lang"
-               placeholder="e.g. fr, en, (leave empty to auto-detect from your browser)"
+               placeholder="e.g. fr, en  —  leave empty to auto-detect from your browser"
                maxlength="5" autocomplete="off" />
       </div>
 
@@ -212,11 +255,19 @@
 
     </form>
 
+    <div class="progress-feed" id="progressFeed">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">Starting...</div>
+      <div class="titles-feed" id="titlesFeed"></div>
+    </div>
+
     <div class="status" id="status"></div>
 
     <p class="note">
-      Scraping may take 30–60 s for large requests.<br>
-      If Google blocks the request, wait 20–30 min and try again.
+      Each page takes 8 to 15 seconds. 30 pages can take up to 6 minutes.<br>
+      Keep this tab open until the download starts.
     </p>
 
     <p class="signature">
@@ -225,59 +276,100 @@
   </div>
 
   <script>
-    document.getElementById("scrapeForm").addEventListener("submit", async (e) => {
+    document.getElementById("scrapeForm").addEventListener("submit", (e) => {
       e.preventDefault();
 
-      const btn     = document.getElementById("submitBtn");
-      const spinner = document.getElementById("spinner");
-      const btnText = document.getElementById("btnText");
-      const status  = document.getElementById("status");
+      const btn          = document.getElementById("submitBtn");
+      const spinner      = document.getElementById("spinner");
+      const btnText      = document.getElementById("btnText");
+      const status       = document.getElementById("status");
+      const progressFeed = document.getElementById("progressFeed");
+      const progressBar  = document.getElementById("progressBar");
+      const progressLabel= document.getElementById("progressLabel");
+      const titlesFeed   = document.getElementById("titlesFeed");
 
-      // Loading state
-      btn.disabled        = true;
-      spinner.style.display = "block";
-      btnText.textContent = "Scraping…";
-      status.className    = "status info";
-      status.style.display = "block";
-      status.textContent  = "Fetching results from Google Scholar, please wait…";
+      // Reset UI
+      status.style.display       = "none";
+      progressFeed.style.display = "block";
+      progressBar.style.width    = "0%";
+      progressLabel.textContent  = "Connecting...";
+      titlesFeed.innerHTML       = "";
+      btn.disabled               = true;
+      spinner.style.display      = "block";
+      btnText.textContent        = "Scraping...";
 
-      const formData = new FormData(e.target);
+      // Build query string from form
+      const form   = e.target;
+      const params = new URLSearchParams({
+        keywords:  form.keywords.value.trim(),
+        pages:     form.pages.value,
+        year_low:  form.year_low.value,
+        year_high: form.year_high.value,
+        lang:      form.lang.value.trim(),
+      });
 
-      try {
-        const response = await fetch("/scrape", {
-          method: "POST",
-          body:   formData,
-        });
+      const es = new EventSource(`/scrape-stream?${params}`);
 
-        if (response.ok) {
-          // Trigger file download
-          const blob     = await response.blob();
-          const disposition = response.headers.get("Content-Disposition") || "";
-          const match    = disposition.match(/filename=(.+)/);
-          const filename = match ? match[1] : "scholar_results.csv";
+      es.onmessage = (event) => {
+        const data = JSON.parse(event.data);
 
-          const url  = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href  = url;
-          link.download = filename;
+        if (data.type === "paper") {
+          const pct = Math.round((data.count / (data.total * 10)) * 100);
+          progressBar.style.width   = pct + "%";
+          progressLabel.textContent = `Page ${data.page} of ${data.total}  —  ${data.count} papers fetched`;
+
+          titlesFeed.textContent = data.title;
+        }
+
+        else if (data.type === "done") {
+          es.close();
+          progressBar.style.width   = "100%";
+          progressLabel.textContent = `Done! ${data.count} results collected.`;
+          titlesFeed.innerHTML      = "";
+
+          // Decode base64 CSV and trigger download
+          const csvBytes = atob(data.csv);
+          const blob     = new Blob([csvBytes], { type: "text/csv" });
+          const url      = URL.createObjectURL(blob);
+          const link     = document.createElement("a");
+          link.href      = url;
+          link.download  = data.filename;
           link.click();
           URL.revokeObjectURL(url);
 
           status.className    = "status success";
-          status.textContent  = `Done! Your CSV file "${filename}" is downloading.`;
-        } else {
-          const data = await response.json();
-          status.className    = "status error";
-          status.textContent  = `Error: ${data.error}`;
+          status.style.display= "block";
+          status.textContent  = `${data.count} papers saved to "${data.filename}".`;
+
+          btn.disabled          = false;
+          spinner.style.display = "none";
+          btnText.textContent   = "Search & Download CSV";
         }
-      } catch (err) {
+
+        else if (data.type === "error") {
+          es.close();
+          progressFeed.style.display = "none";
+          status.className    = "status error";
+          status.style.display= "block";
+          status.textContent  = `Error: ${data.message}`;
+
+          btn.disabled          = false;
+          spinner.style.display = "none";
+          btnText.textContent   = "Search & Download CSV";
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        progressFeed.style.display = "none";
         status.className    = "status error";
-        status.textContent  = "Network error — make sure the server is running.";
-      } finally {
+        status.style.display= "block";
+        status.textContent  = "Connection lost. Check your internet connection and try again.";
+
         btn.disabled          = false;
         spinner.style.display = "none";
         btnText.textContent   = "Search & Download CSV";
-      }
+      };
     });
   </script>
 </body>
