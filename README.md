@@ -1,24 +1,26 @@
-# Google Scholar Scraper
+# Papers Scraper
 
-A tool to scrape papers from Google Scholar by keyword. You can use it two ways: from the command line or through a web interface. Both give you a CSV file with the paper title, authors, publication year, venue, and URL.
+A tool to search academic papers by keyword and export the results as a CSV. It supports two sources: **Google Scholar** (web scraping) and **OpenAlex** (free open API). You can use it from a web interface or straight from the command line.
+
+Both sources give you the same output format — title, authors, year, venue, URL, and abstract.
 
 ---
 
-## Option 1 - Web Interface
+## Web Interface
 
-If you just want to search without touching the terminal, a web interface is available at:
+If you don't want to touch the terminal, the hosted version is at:
 
 ```
 https://papers-scraper.onrender.com
 ```
 
-Fill in your keywords, pick how many pages you want, optionally set a year range, and hit the button. The CSV file downloads automatically when the scraping is done.
+Pick your source (Scholar or OpenAlex), enter your keywords, set a year range if you want, and hit the button. The CSV downloads automatically when it's done.
 
-> The app is hosted on Render free tier so it may take around 30 seconds to wake up on the first request.
+> Hosted on Render free tier — it may take ~30 seconds to wake up on the first request.
 
 ---
 
-## Option 2 - Command Line
+## Command Line
 
 ### Setup (run once)
 
@@ -26,59 +28,87 @@ Fill in your keywords, pick how many pages you want, optionally set a year range
 bash setup.sh
 ```
 
-This creates a `.venv` and installs all dependencies automatically.
+Creates a `.venv` and installs everything.
 
-### Activation
-
-At the start of each new terminal session, activate the environment:
+### Activate the environment
 
 ```bash
 source .venv/bin/activate
 ```
 
-### Usage
+---
+
+### Google Scholar CLI
 
 ```bash
-python web-scraper.py -k "your keywords" -p <number_of_pages>
+python web-scraper.py -k "your keywords" -p <pages>
 ```
-
-### Arguments
 
 | Argument | Required | Description | Default |
 |---|---|---|---|
-| `-k` / `--keywords` | Yes | Search query | none |
-| `-p` / `--pages` | No | Number of pages to scrape (10 results/page) | `10` |
-| `--year-low` | No | Filter results from this year onward | none |
-| `--year-high` | No | Filter results up to this year | none |
-| `--lang` | No | Language code for Scholar (e.g. fr, en) | auto-detected |
+| `-k` / `--keywords` | Yes | Search query | — |
+| `-p` / `--pages` | No | Pages to scrape (10 results/page) | `10` |
+| `--year-low` | No | Filter from this year | — |
+| `--year-high` | No | Filter up to this year | — |
+| `--lang` | No | Scholar language code (e.g. `fr`, `en`) | auto-detected |
 | `-o` / `--output` | No | Output CSV filename | `scholar_results.csv` |
 | `--min-delay` | No | Min seconds between pages | `3` |
 | `--max-delay` | No | Max seconds between pages | `6` |
 
-### Examples
+**Examples:**
 
 ```bash
-# Scrape 5 pages (~50 results) for "machine learning"
+# Basic search, 5 pages (~50 results)
 python web-scraper.py -k "machine learning" -p 5
 
-# Scrape with a year range filter
+# With a year range
 python web-scraper.py -k "sobriété informatique" -p 10 --year-low 2020 --year-high 2024
 
 # Force a specific language
 python web-scraper.py -k "secure deployment" -p 5 --lang fr
 
-# Save results to a custom file
+# Save to a custom file
 python web-scraper.py -k "deep learning" -p 20 -o deep_learning.csv
-
-# Show all available options
-python web-scraper.py --help
 ```
+
+> **Heads up:** Google Scholar is web scraping. Google can flag requests, serve a CAPTCHA, or block the server temporarily. If that happens, wait 30–60 minutes and try again. Avoid hammering too many pages at once.
 
 ---
 
-## Output
+### OpenAlex CLI
 
-Results are saved as a CSV file with the following columns:
+```bash
+python openalex-scraper.py -k "your keywords" -p <pages>
+```
+
+| Argument | Required | Description | Default |
+|---|---|---|---|
+| `-k` / `--keywords` | Yes | Search query | — |
+| `-p` / `--pages` | No | Pages to fetch (25 results/page) | `5` |
+| `--year-low` | No | Filter from this year | — |
+| `--year-high` | No | Filter up to this year | — |
+| `-o` / `--output` | No | Output CSV filename | `openalex_results.csv` |
+
+**Examples:**
+
+```bash
+# Basic search, 5 pages (~125 results)
+python openalex-scraper.py -k "machine learning" -p 5
+
+# With a year range
+python openalex-scraper.py -k "deep learning" -p 10 --year-low 2020 --year-high 2024
+
+# Save to a custom file
+python openalex-scraper.py -k "network security" -p 3 -o results.csv
+```
+
+> OpenAlex pulls from a free open API — no scraping, no blocks, no CAPTCHA. Safe to use freely.
+
+---
+
+## Output format
+
+Both sources produce the same CSV columns:
 
 | Column | Description |
 |---|---|
@@ -92,21 +122,11 @@ Results are saved as a CSV file with the following columns:
 
 ---
 
-## Run the Web Interface Locally
-
-If you want to run the web app on your own machine instead of using the hosted version:
+## Run the web app locally
 
 ```bash
 source .venv/bin/activate
 python app.py
 ```
 
-Then open `http://127.0.0.1:5000` in your browser.
-
----
-
-## Tips
-
-- If Google blocks the scraper with a CAPTCHA, wait 20 to 30 minutes and try again.
-- Avoid running too many pages in a short time, it increases the chance of getting blocked.
-- The language is auto-detected from your system locale. If results look off, pass `--lang` explicitly.
+Then open `http://127.0.0.1:5000`.

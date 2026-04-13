@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Scholar Scraper</title>
+  <title>Papers Scraper</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,7 +36,60 @@
     .subtitle {
       font-size: 0.875rem;
       color: #6b7280;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Source toggle */
+    .source-toggle {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      gap: 4px;
+    }
+
+    .source-toggle button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #6b7280;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .source-toggle button.active {
+      background: #fff;
+      color: #1a1a2e;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Warning banner */
+    .banner {
+      display: none;
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.8rem;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .banner strong { font-weight: 700; }
+
+    .banner.safe {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    .banner.warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
     }
 
     .form-group {
@@ -94,7 +147,7 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: #4f46e5;
-      min-width: 2.5rem;
+      min-width: 11rem;
       text-align: right;
     }
 
@@ -212,10 +265,29 @@
 </head>
 <body>
   <div class="card">
-    <h1>Google Scholar Scraper</h1>
-    <p class="subtitle">Search papers and download results as a CSV file.</p>
+    <h1>Papers Scraper</h1>
+    <p class="subtitle">Search academic papers and download results as a CSV file.</p>
+
+    <!-- Source selector -->
+    <div class="source-toggle">
+      <button type="button" id="btnScholar" class="active" onclick="setSource('scholar')">Google Scholar</button>
+      <button type="button" id="btnOpenalex"              onclick="setSource('openalex')">OpenAlex</button>
+    </div>
+
+    <!-- Scholar warning -->
+    <div class="banner warning" id="scholarBanner" style="display:block">
+      <strong>Heads up:</strong> Google Scholar uses web scraping. Google may flag requests,
+      trigger a CAPTCHA, or temporarily block the server. If that happens, wait 30–60 minutes and try again.
+    </div>
+
+    <!-- OpenAlex info -->
+    <div class="banner safe" id="openalexBanner">
+      <strong>Safe to use:</strong> OpenAlex fetches data from a free, open API —
+      no scraping, no rate limits, no risk of being blocked.
+    </div>
 
     <form id="scrapeForm">
+      <input type="hidden" id="source" name="source" value="scholar" />
 
       <div class="form-group">
         <label for="keywords">Keywords <span class="hint">(required)</span></label>
@@ -225,10 +297,10 @@
       </div>
 
       <div class="form-group">
-        <label for="pages">Pages to scrape <span class="hint">(10 results / page)</span></label>
+        <label for="pages">Pages to scrape <span class="hint" id="perPageHint">(10 results / page)</span></label>
         <div class="pages-row">
           <input type="range" id="pages" name="pages" min="1" max="30" value="5"
-                 oninput="document.getElementById('pagesVal').textContent = this.value + ' pages (~' + this.value*10 + ' results)'" />
+                 oninput="updatePagesLabel()" />
           <span class="pages-value" id="pagesVal">5 pages (~50 results)</span>
         </div>
       </div>
@@ -241,7 +313,7 @@
         </div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" id="langGroup">
         <label for="lang">Google Scholar region <span class="hint">(optional)</span></label>
         <input type="text" id="lang" name="lang"
                placeholder="e.g. fr, en  —  leave empty to auto-detect from your browser"
@@ -252,7 +324,6 @@
         <span class="spinner" id="spinner"></span>
         <span id="btnText">Search &amp; Download CSV</span>
       </button>
-
     </form>
 
     <div class="progress-feed" id="progressFeed">
@@ -265,7 +336,7 @@
 
     <div class="status" id="status"></div>
 
-    <p class="note">
+    <p class="note" id="note">
       Each page takes 8 to 15 seconds. 30 pages can take up to 6 minutes.<br>
       Keep this tab open until the download starts.
     </p>
@@ -276,6 +347,53 @@
   </div>
 
   <script>
+    // ── Source toggle ──────────────────────────────────────────────
+    const SOURCES = {
+      scholar: {
+        perPage: 10,
+        maxPages: 30,
+        hint: "10 results / page",
+        note: "Each page takes 8 to 15 seconds. 30 pages can take up to 6 minutes.<br>Keep this tab open until the download starts.",
+      },
+      openalex: {
+        perPage: 25,
+        maxPages: 40,
+        hint: "25 results / page",
+        note: "OpenAlex is API-based — results arrive quickly.<br>Keep this tab open until the download starts.",
+      },
+    };
+
+    let currentSource = "scholar";
+
+    function setSource(src) {
+      currentSource = src;
+      document.getElementById("source").value = src;
+
+      document.getElementById("btnScholar").classList.toggle("active", src === "scholar");
+      document.getElementById("btnOpenalex").classList.toggle("active", src === "openalex");
+
+      document.getElementById("scholarBanner").style.display  = src === "scholar"  ? "block" : "none";
+      document.getElementById("openalexBanner").style.display = src === "openalex" ? "block" : "none";
+      document.getElementById("langGroup").style.display      = src === "scholar"  ? "block" : "none";
+
+      const cfg    = SOURCES[src];
+      const slider = document.getElementById("pages");
+      slider.max   = cfg.maxPages;
+      if (parseInt(slider.value) > cfg.maxPages) slider.value = cfg.maxPages;
+
+      document.getElementById("perPageHint").textContent = cfg.hint;
+      document.getElementById("note").innerHTML          = cfg.note;
+      updatePagesLabel();
+    }
+
+    function updatePagesLabel() {
+      const val = document.getElementById("pages").value;
+      const perPage = SOURCES[currentSource].perPage;
+      document.getElementById("pagesVal").textContent =
+        `${val} pages (~${val * perPage} results)`;
+    }
+
+    // ── Form submit ────────────────────────────────────────────────
     document.getElementById("scrapeForm").addEventListener("submit", (e) => {
       e.preventDefault();
 
@@ -288,7 +406,6 @@
       const progressLabel= document.getElementById("progressLabel");
       const titlesFeed   = document.getElementById("titlesFeed");
 
-      // Reset UI
       status.style.display       = "none";
       progressFeed.style.display = "block";
       progressBar.style.width    = "0%";
@@ -296,29 +413,29 @@
       titlesFeed.innerHTML       = "";
       btn.disabled               = true;
       spinner.style.display      = "block";
-      btnText.textContent        = "Scraping...";
+      btnText.textContent        = currentSource === "openalex" ? "Fetching..." : "Scraping...";
 
-      // Build query string from form
       const form   = e.target;
       const params = new URLSearchParams({
+        source:    currentSource,
         keywords:  form.keywords.value.trim(),
         pages:     form.pages.value,
         year_low:  form.year_low.value,
         year_high: form.year_high.value,
-        lang:      form.lang.value.trim(),
+        lang:      currentSource === "scholar" ? (form.lang ? form.lang.value.trim() : "") : "",
       });
 
+      const perPage = SOURCES[currentSource].perPage;
       const es = new EventSource(`/scrape-stream?${params}`);
 
       es.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
         if (data.type === "paper") {
-          const pct = Math.round((data.count / (data.total * 10)) * 100);
+          const pct = Math.round((data.count / (data.total * perPage)) * 100);
           progressBar.style.width   = pct + "%";
           progressLabel.textContent = `Page ${data.page} of ${data.total}  —  ${data.count} papers fetched`;
-
-          titlesFeed.textContent = data.title;
+          titlesFeed.textContent    = data.title;
         }
 
         else if (data.type === "done") {
@@ -327,7 +444,6 @@
           progressLabel.textContent = `Done! ${data.count} results collected.`;
           titlesFeed.innerHTML      = "";
 
-          // Decode base64 CSV and trigger download
           const csvBytes = atob(data.csv);
           const blob     = new Blob([csvBytes], { type: "text/csv" });
           const url      = URL.createObjectURL(blob);
@@ -337,9 +453,9 @@
           link.click();
           URL.revokeObjectURL(url);
 
-          status.className    = "status success";
-          status.style.display= "block";
-          status.textContent  = `${data.count} papers saved to "${data.filename}".`;
+          status.className     = "status success";
+          status.style.display = "block";
+          status.textContent   = `${data.count} papers saved to "${data.filename}".`;
 
           btn.disabled          = false;
           spinner.style.display = "none";
@@ -349,9 +465,9 @@
         else if (data.type === "error") {
           es.close();
           progressFeed.style.display = "none";
-          status.className    = "status error";
-          status.style.display= "block";
-          status.textContent  = `Error: ${data.message}`;
+          status.className     = "status error";
+          status.style.display = "block";
+          status.textContent   = `Error: ${data.message}`;
 
           btn.disabled          = false;
           spinner.style.display = "none";
@@ -362,9 +478,9 @@
       es.onerror = () => {
         es.close();
         progressFeed.style.display = "none";
-        status.className    = "status error";
-        status.style.display= "block";
-        status.textContent  = "Connection lost. Check your internet connection and try again.";
+        status.className     = "status error";
+        status.style.display = "block";
+        status.textContent   = "Connection lost. Check your internet connection and try again.";
 
         btn.disabled          = false;
         spinner.style.display = "none";
