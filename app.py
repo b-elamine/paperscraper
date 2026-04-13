@@ -3,7 +3,7 @@ import io
 import json
 import base64
 
-from flask import Flask, Response, render_template, request, jsonify
+from flask import Flask, Response, render_template, request, jsonify, stream_with_context
 
 from scraper import run_scrape, scrape_pages
 
@@ -63,7 +63,7 @@ def scrape_stream():
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': f'Scraping failed: {e}'})}\n\n"
 
-    return Response(generate(), mimetype="text/event-stream",
+    return Response(stream_with_context(generate()), mimetype="text/event-stream",
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
