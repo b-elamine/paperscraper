@@ -55,7 +55,7 @@ def fetch_page(url, session, retries=3, base_wait=10):
         response = session.get(url, headers=headers, timeout=15)
         if response.status_code == 429:
             if attempt == retries:
-                response.raise_for_status()
+                raise RuntimeError("Google has temporarily blocked this server. Please wait 30 to 60 minutes and try again.")
             wait = base_wait * attempt + random.uniform(0, 5)
             time.sleep(wait)
             continue
