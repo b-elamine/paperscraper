@@ -2,7 +2,7 @@
 
 A tool to search academic papers by keyword and export the results as a CSV. It supports two sources: **Google Scholar** (web scraping) and **OpenAlex** (free open API). You can use it from a web interface or straight from the command line.
 
-Both sources give you the same output format — title, authors, year, venue, URL, and abstract.
+Both sources give you the same output format: title, authors, year, venue, URL, and abstract.
 
 ---
 
@@ -16,7 +16,7 @@ https://papers-scraper.onrender.com
 
 Pick your source (Scholar or OpenAlex), enter your keywords, set a year range if you want, and hit the button. The CSV downloads automatically when it's done.
 
-> Hosted on Render free tier — it may take ~30 seconds to wake up on the first request.
+> Hosted on Render free tier, it may take ~30 seconds to wake up on the first request.
 
 ---
 
@@ -46,10 +46,10 @@ python web-scraper.py -k "your keywords" -p <pages>
 
 | Argument | Required | Description | Default |
 |---|---|---|---|
-| `-k` / `--keywords` | Yes | Search query | — |
+| `-k` / `--keywords` | Yes | Search query | |
 | `-p` / `--pages` | No | Pages to scrape (10 results/page) | `10` |
-| `--year-low` | No | Filter from this year | — |
-| `--year-high` | No | Filter up to this year | — |
+| `--year-low` | No | Filter from this year | |
+| `--year-high` | No | Filter up to this year | |
 | `--lang` | No | Scholar language code (e.g. `fr`, `en`) | auto-detected |
 | `-o` / `--output` | No | Output CSV filename | `scholar_results.csv` |
 | `--min-delay` | No | Min seconds between pages | `3` |
@@ -83,10 +83,10 @@ python openalex-scraper.py -k "your keywords" -p <pages>
 
 | Argument | Required | Description | Default |
 |---|---|---|---|
-| `-k` / `--keywords` | Yes | Search query | — |
+| `-k` / `--keywords` | Yes | Search query | |
 | `-p` / `--pages` | No | Pages to fetch (25 results/page) | `5` |
-| `--year-low` | No | Filter from this year | — |
-| `--year-high` | No | Filter up to this year | — |
+| `--year-low` | No | Filter from this year | |
+| `--year-high` | No | Filter up to this year | |
 | `-o` / `--output` | No | Output CSV filename | `openalex_results.csv` |
 
 **Examples:**
@@ -102,7 +102,7 @@ python openalex-scraper.py -k "deep learning" -p 10 --year-low 2020 --year-high 
 python openalex-scraper.py -k "network security" -p 3 -o results.csv
 ```
 
-> OpenAlex pulls from a free open API — no scraping, no blocks, no CAPTCHA. Safe to use freely.
+> OpenAlex pulls from a free open API, no scraping, no blocks, no CAPTCHA. Safe to use freely.
 
 ---
 
