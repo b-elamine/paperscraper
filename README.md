@@ -11,7 +11,7 @@ Both sources give you the same output format: title, authors, year, venue, URL, 
 If you don't want to touch the terminal, the hosted version is at:
 
 ```
-https://papers-scraper.onrender.com
+https://papers-scraping.onrender.com/
 ```
 
 Pick your source (Scholar or OpenAlex), enter your keywords, set a year range if you want, and hit the button. The CSV downloads automatically when it's done.
