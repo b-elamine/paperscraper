@@ -1,22 +1,3 @@
-"""
-Google Scholar Scraper — CLI
-=============================
-Usage:
-    python web-scraper.py -k "machine learning" -p 5
-    python web-scraper.py -k "sobriété informatique" -p 10 --year-low 2020 --year-high 2024
-    python web-scraper.py -k "deep learning" -p 20 -o results.csv --lang fr
-
-Arguments:
-    -k / --keywords   Search query (required)
-    -p / --pages      Number of Scholar pages to scrape (default: 10, max: 100)
-    --year-low        Filter: earliest publication year (optional)
-    --year-high       Filter: latest publication year (optional)
-    --lang            Language code, e.g. fr, en (auto-detected if not set)
-    -o / --output     Output CSV filename (default: scholar_results.csv)
-    --min-delay       Min seconds between pages (default: 3)
-    --max-delay       Max seconds between pages (default: 6)
-"""
-
 import argparse
 import csv
 import sys

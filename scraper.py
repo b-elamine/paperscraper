@@ -1,7 +1,3 @@
-"""
-Core scraping logic — used by both web-scraper.py (CLI) and app.py (Flask).
-"""
-
 import locale
 import random
 import re

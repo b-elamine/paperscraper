@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Creates a Python virtual environment and installs dependencies.
-# Run once:  bash setup.sh
-# Then activate with:  source .venv/bin/activate
 
 set -e
 
