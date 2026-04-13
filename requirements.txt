@@ -1,2 +1,2 @@
-scholarly>=1.7
-fake-useragent>=1.4
+requests>=2.31
+beautifulsoup4>=4.12

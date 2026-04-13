@@ -1,7 +1,8 @@
 """
 Google Scholar Scraper
 ======================
-Scrapes paper titles, authors, publication year, and URL from Google Scholar.
+Scrapes paper titles, authors, publication year, and URL from Google Scholar
+by directly requesting the same URLs your browser uses.
 
 Usage:
     python web-scraper.py -k "machine learning" -p 5
@@ -14,14 +15,12 @@ Arguments:
     --year-low        Filter: earliest publication year  (optional)
     --year-high       Filter: latest  publication year  (optional)
     -o / --output     Output CSV filename (default: scholar_results.csv)
-    --min-delay       Min seconds between requests (default: 8)
-    --max-delay       Max seconds between requests (default: 15)
-    --tor             Enable Tor proxy (requires Tor running on port 9050)
+    --min-delay       Min seconds between pages (default: 3)
+    --max-delay       Max seconds between pages (default: 6)
 
 Tips to avoid blocks:
-    - Keep delays generous (default 8-15 s).
-    - If you hit a CAPTCHA, wait ~30 min then retry.
-    - Use --tor for better anonymity (requires Tor installed).
+    - Keep delays at defaults (3-6 s per page).
+    - If you hit a CAPTCHA, wait 20-30 min then retry.
 """
 
 import argparse
@@ -29,7 +28,35 @@ import csv
 import time
 import random
 import sys
+import re
 from datetime import datetime
+from urllib.parse import urlencode
+
+import locale
+import requests
+from bs4 import BeautifulSoup
+
+
+BASE_URL = "https://scholar.google.com/scholar"
+
+
+def detect_lang():
+    """Return the 2-letter language code from the system locale (e.g. 'fr', 'en')."""
+    try:
+        code = locale.getlocale()[0] or ""   # e.g. 'fr_FR'
+        lang = code.split("_")[0]
+        return lang if len(lang) == 2 else "en"
+    except Exception:
+        return "en"
+
+# Rotate through several realistic browser User-Agents
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -73,23 +100,23 @@ def parse_args():
         help="Output CSV filename (default: scholar_results.csv)",
     )
     parser.add_argument(
+        "--lang",
+        default=None,
+        help="Language code for Scholar (e.g. 'fr', 'en'). Auto-detected from system if not set.",
+    )
+    parser.add_argument(
         "--min-delay",
         type=float,
-        default=8.0,
+        default=3.0,
         dest="min_delay",
-        help="Min seconds between requests (default: 8)",
+        help="Min seconds to wait between pages (default: 3)",
     )
     parser.add_argument(
         "--max-delay",
         type=float,
-        default=15.0,
+        default=6.0,
         dest="max_delay",
-        help="Max seconds between requests (default: 15)",
-    )
-    parser.add_argument(
-        "--tor",
-        action="store_true",
-        help="Use Tor proxy for anonymity (requires Tor running on port 9050)",
+        help="Max seconds to wait between pages (default: 6)",
     )
     return parser.parse_args()
 
@@ -97,87 +124,132 @@ def parse_args():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def setup_tor():
-    try:
-        from scholarly import ProxyGenerator, scholarly as _scholarly
-        pg = ProxyGenerator()
-        success = pg.Tor_Internal(tor_cmd="tor")
-        if success:
-            _scholarly.use_proxy(pg)
-            print("[+] Tor proxy active.")
-        else:
-            print("[!] Could not start Tor — running without proxy.")
-    except Exception as e:
-        print(f"[!] Tor setup failed: {e}")
+def build_url(keywords, page, lang, year_low=None, year_high=None):
+    params = {
+        "q":      keywords,
+        "hl":     lang,
+        "as_sdt": "0,5",
+        "start":  page * 10,
+    }
+    if year_low:
+        params["as_ylo"] = year_low
+    if year_high:
+        params["as_yhi"] = year_high
+    return f"{BASE_URL}?{urlencode(params)}"
 
 
-def scrape(args):
-    try:
-        from scholarly import scholarly
-    except ImportError:
-        sys.exit(
-            "\n[ERROR] 'scholarly' is not installed.\n"
-            "Activate the virtual environment and run:\n"
-            "    pip install -r requirements.txt\n"
+def fetch_page(url, session):
+    headers = {
+        "User-Agent":      random.choice(USER_AGENTS),
+        "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection":      "keep-alive",
+        "DNT":             "1",
+    }
+    response = session.get(url, headers=headers, timeout=15)
+    response.raise_for_status()
+    return response.text
+
+
+def parse_page(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Detect CAPTCHA
+    if soup.find("form", {"action": re.compile(r"sorry")}):
+        raise RuntimeError(
+            "Google returned a CAPTCHA page. "
+            "Wait 20-30 minutes and retry, or use a VPN."
         )
 
-    if args.tor:
-        setup_tor()
-
-    target = args.pages * 10  # scholarly yields one record at a time
-
-    year_info = ""
-    if args.year_low or args.year_high:
-        year_info = f" | years: {args.year_low or '?'} – {args.year_high or '?'}"
-
-    print(f"\nSearching Google Scholar for: '{args.keywords}'{year_info}")
-    print(f"Target: {args.pages} page(s) (~{target} results)\n")
-
-    query_kwargs = {}
-    if args.year_low:
-        query_kwargs["year_low"] = args.year_low
-    if args.year_high:
-        query_kwargs["year_high"] = args.year_high
-
-    query = scholarly.search_pubs(args.keywords, **query_kwargs)
-
     results = []
+    for item in soup.select("div.gs_r.gs_or.gs_scl"):
+        # Title and link
+        title_tag = item.select_one("h3.gs_rt a")
+        if title_tag:
+            title = title_tag.get_text(strip=True)
+            url   = title_tag.get("href", "N/A")
+        else:
+            # Sometimes the title has no link (book, citation-only)
+            title_tag = item.select_one("h3.gs_rt")
+            title = title_tag.get_text(strip=True) if title_tag else "N/A"
+            url   = "N/A"
 
-    for i, pub in enumerate(query):
-        if i >= target:
-            break
+        # Authors, venue, year — all packed in one line like:
+        # "A Author, B Author - Journal Name, 2022 - publisher.com"
+        meta_tag = item.select_one("div.gs_a")
+        authors, venue, year = "N/A", "N/A", "N/A"
+        if meta_tag:
+            meta = meta_tag.get_text(separator=" ", strip=True)
+            parts = [p.strip() for p in meta.split(" - ")]
+            if parts:
+                authors = parts[0]
+            if len(parts) >= 2:
+                # Second segment is "Venue, Year" or just "Year"
+                venue_year = parts[1]
+                year_match = re.search(r"\b(19|20)\d{2}\b", venue_year)
+                if year_match:
+                    year = year_match.group(0)
+                    venue = venue_year.replace(year, "").strip(" ,")
+                else:
+                    venue = venue_year
 
-        bib = pub.get("bib", {})
-        title = bib.get("title", "N/A")
-        authors = bib.get("author", "N/A")
-        year = bib.get("pub_year", "N/A")
-        venue = bib.get("venue", "N/A")
-        abstract = bib.get("abstract", "") or ""
+        # Abstract snippet
+        abstract_tag = item.select_one("div.gs_rs")
+        abstract = abstract_tag.get_text(strip=True) if abstract_tag else ""
 
-        if isinstance(authors, list):
-            authors = "; ".join(authors)
-
-        url = pub.get("pub_url") or pub.get("eprint_url") or "N/A"
-
-        record = {
-            "index":    i + 1,
+        results.append({
             "title":    title,
             "authors":  authors,
             "year":     year,
             "venue":    venue,
             "url":      url,
-            "abstract": abstract[:300].replace("\n", " "),
-        }
-        results.append(record)
-
-        page_num = (i // 10) + 1
-        print(f"  [{i+1:>3}] (page {page_num}/{args.pages}) {title[:75]}")
-
-        delay = random.uniform(args.min_delay, args.max_delay)
-        print(f"       ↳ waiting {delay:.1f}s …")
-        time.sleep(delay)
+            "abstract": abstract[:300],
+        })
 
     return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def scrape(args):
+    year_info = ""
+    if args.year_low or args.year_high:
+        year_info = f" | years: {args.year_low or '?'} – {args.year_high or '?'}"
+
+    lang = args.lang if args.lang else detect_lang()
+
+    print(f"\nSearching Google Scholar for: '{args.keywords}'{year_info}")
+    print(f"Locale: {lang} | Target: {args.pages} page(s) (~{args.pages * 10} results)\n")
+
+    session = requests.Session()
+    all_results = []
+    index = 1
+
+    for page in range(args.pages):
+        url = build_url(args.keywords, page, lang, args.year_low, args.year_high)
+        print(f"  [page {page + 1}/{args.pages}] {url}")
+
+        html    = fetch_page(url, session)
+        records = parse_page(html)
+
+        if not records:
+            print("  [!] No results found on this page — stopping early.")
+            break
+
+        for record in records:
+            record["index"] = index
+            all_results.append(record)
+            print(f"    [{index:>3}] {record['title'][:75]}")
+            index += 1
+
+        if page < args.pages - 1:
+            delay = random.uniform(args.min_delay, args.max_delay)
+            print(f"\n  --- waiting {delay:.1f}s before next page ---\n")
+            time.sleep(delay)
+
+    return all_results
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,14 +292,11 @@ def main():
     except KeyboardInterrupt:
         print("\n[!] Interrupted by user.")
         sys.exit(0)
+    except RuntimeError as e:
+        print(f"\n[BLOCKED] {e}")
+        sys.exit(1)
     except Exception as e:
         print(f"\n[ERROR] {e}")
-        print(
-            "\nCommon causes:\n"
-            "  • Google served a CAPTCHA — wait 20-30 min and retry.\n"
-            "  • Network issue — check your connection.\n"
-            "  • Try running with --tor for better anonymity.\n"
-        )
         raise
 
     elapsed = (datetime.now() - start).seconds
