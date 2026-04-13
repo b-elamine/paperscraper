@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Scholar Scraper</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+
+    label .hint {
+      font-weight: 400;
+      color: #9ca3af;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #111827;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .pages-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .pages-row input[type="range"] {
+      flex: 1;
+      accent-color: #4f46e5;
+    }
+
+    .pages-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #4f46e5;
+      min-width: 2.5rem;
+      text-align: right;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.75rem;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button[type="submit"]:hover:not(:disabled) { background: #4338ca; }
+    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status {
+      margin-top: 1.25rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    .status.info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .status.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+    .note {
+      margin-top: 1.5rem;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .signature {
+      margin-top: 1rem;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    .signature a {
+      color: #4f46e5;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .signature a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Google Scholar Scraper</h1>
+    <p class="subtitle">Search papers and download results as a CSV file.</p>
+
+    <form id="scrapeForm">
+
+      <div class="form-group">
+        <label for="keywords">Keywords <span class="hint">(required)</span></label>
+        <input type="text" id="keywords" name="keywords"
+               placeholder="e.g. secure deployment, machine learning"
+               required autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="pages">Pages to scrape <span class="hint">(10 results / page)</span></label>
+        <div class="pages-row">
+          <input type="range" id="pages" name="pages" min="1" max="30" value="5"
+                 oninput="document.getElementById('pagesVal').textContent = this.value + ' pages (~' + this.value*10 + ' results)'" />
+          <span class="pages-value" id="pagesVal">5 pages (~50 results)</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Year range <span class="hint">(optional)</span></label>
+        <div class="row">
+          <input type="number" name="year_low"  placeholder="From year" min="1900" max="2099" />
+          <input type="number" name="year_high" placeholder="To year"   min="1900" max="2099" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="lang">Google Scholar region <span class="hint">(optional)</span></label>
+        <input type="text" id="lang" name="lang"
+               placeholder="e.g. fr, en, (leave empty to auto-detect from your browser)"
+               maxlength="5" autocomplete="off" />
+      </div>
+
+      <button type="submit" id="submitBtn">
+        <span class="spinner" id="spinner"></span>
+        <span id="btnText">Search &amp; Download CSV</span>
+      </button>
+
+    </form>
+
+    <div class="status" id="status"></div>
+
+    <p class="note">
+      Scraping may take 30–60 s for large requests.<br>
+      If Google blocks the request, wait 20–30 min and try again.
+    </p>
+
+    <p class="signature">
+      made by <a href="https://github.com/b-elamine" target="_blank" rel="noopener">b-elamine</a>
+    </p>
+  </div>
+
+  <script>
+    document.getElementById("scrapeForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const btn     = document.getElementById("submitBtn");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btnText");
+      const status  = document.getElementById("status");
+
+      // Loading state
+      btn.disabled        = true;
+      spinner.style.display = "block";
+      btnText.textContent = "Scraping…";
+      status.className    = "status info";
+      status.style.display = "block";
+      status.textContent  = "Fetching results from Google Scholar, please wait…";
+
+      const formData = new FormData(e.target);
+
+      try {
+        const response = await fetch("/scrape", {
+          method: "POST",
+          body:   formData,
+        });
+
+        if (response.ok) {
+          // Trigger file download
+          const blob     = await response.blob();
+          const disposition = response.headers.get("Content-Disposition") || "";
+          const match    = disposition.match(/filename=(.+)/);
+          const filename = match ? match[1] : "scholar_results.csv";
+
+          const url  = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href  = url;
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(url);
+
+          status.className    = "status success";
+          status.textContent  = `Done! Your CSV file "${filename}" is downloading.`;
+        } else {
+          const data = await response.json();
+          status.className    = "status error";
+          status.textContent  = `Error: ${data.error}`;
+        }
+      } catch (err) {
+        status.className    = "status error";
+        status.textContent  = "Network error — make sure the server is running.";
+      } finally {
+        btn.disabled          = false;
+        spinner.style.display = "none";
+        btnText.textContent   = "Search & Download CSV";
+      }
+    });
+  </script>
+</body>
+</html>
