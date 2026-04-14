@@ -89,6 +89,9 @@ def _stream_openalex(keywords, pages, year_low, year_high):
                 all_results.append(record)
                 index += 1
                 yield f"data: {json.dumps({'type': 'paper', 'page': page_num, 'total': pages, 'title': record['title'], 'count': len(all_results)})}\n\n"
+            # SSE keepalive comment — prevents proxies from closing the idle connection
+            # while the next page is being fetched from the OpenAlex API
+            yield ": keepalive\n\n"
 
         if not all_results:
             yield f"data: {json.dumps({'type': 'error', 'message': 'No results found. Try different keywords or a wider year range.'})}\n\n"

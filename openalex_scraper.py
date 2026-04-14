@@ -1,3 +1,4 @@
+import time
 import requests
 
 API_URL = "https://api.openalex.org/works"
@@ -27,9 +28,16 @@ def fetch_page(keywords, page, year_low=None, year_high=None):
         params["filter"] = f"publication_year:{low}-{high}"
 
     headers = {"User-Agent": "openalex-scraper/1.0 (research tool)"}
-    response = requests.get(API_URL, params=params, headers=headers, timeout=15)
-    response.raise_for_status()
-    return response.json()
+    try:
+        response = requests.get(API_URL, params=params, headers=headers, timeout=20)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.Timeout:
+        raise RuntimeError(f"OpenAlex API timed out on page {page}. Try fewer pages or check your connection.")
+    except requests.exceptions.ConnectionError:
+        raise RuntimeError(f"Could not reach OpenAlex API (page {page}). Check your internet connection.")
+    except requests.exceptions.HTTPError as e:
+        raise RuntimeError(f"OpenAlex API returned an error on page {page}: {e}")
 
 
 def parse_results(data, index_start):
@@ -70,6 +78,8 @@ def scrape_pages(keywords, pages, year_low=None, year_high=None):
         if not results:
             return
         yield page, results, data.get("meta", {}).get("count", 0)
+        if page < pages:
+            time.sleep(0.3)
 
 
 def run_scrape(keywords, pages, year_low=None, year_high=None):
