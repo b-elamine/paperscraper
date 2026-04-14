@@ -4,7 +4,7 @@ set -e
 
 VENV_DIR=".venv"
 
-echo "=== Google Scholar Scraper — Environment Setup ==="
+echo "=== Google Scholar Scraper - Environment Setup ==="
 
 if [ ! -d "$VENV_DIR" ]; then
     echo "[+] Creating virtual environment in '$VENV_DIR' …"

@@ -270,24 +270,24 @@
 
     <!-- Source selector -->
     <div class="source-toggle">
-      <button type="button" id="btnScholar" class="active" onclick="setSource('scholar')">Google Scholar</button>
-      <button type="button" id="btnOpenalex"              onclick="setSource('openalex')">OpenAlex</button>
+      <button type="button" id="btnSemantic" class="active" onclick="setSource('semanticscholar')">Semantic Scholar</button>
+      <button type="button" id="btnOpenalex"               onclick="setSource('openalex')">OpenAlex</button>
     </div>
 
-    <!-- Scholar warning -->
-    <div class="banner warning" id="scholarBanner" style="display:block">
-      <strong>Heads up:</strong> Google Scholar uses web scraping. Google may flag requests,
-      trigger a CAPTCHA, or temporarily block the server. If that happens, wait 30 to 60 minutes and try again.
+    <!-- Semantic Scholar info -->
+    <div class="banner safe" id="semanticBanner" style="display:block">
+      <strong>Safe to use:</strong> Semantic Scholar fetches data from a free, open API.
+      200M+ papers, no scraping, no rate limits, no risk of being blocked.
     </div>
 
     <!-- OpenAlex info -->
     <div class="banner safe" id="openalexBanner">
-      <strong>Safe to use:</strong> OpenAlex fetches data from a free, open API —
-      no scraping, no rate limits, no risk of being blocked.
+      <strong>Safe to use:</strong> OpenAlex fetches data from a free, open API.
+      250M+ papers across all academic fields.
     </div>
 
     <form id="scrapeForm">
-      <input type="hidden" id="source" name="source" value="scholar" />
+      <input type="hidden" id="source" name="source" value="semanticscholar" />
 
       <div class="form-group">
         <label for="keywords">Keywords <span class="hint">(required)</span></label>
@@ -311,13 +311,6 @@
           <input type="number" name="year_low"  placeholder="From year" min="1900" max="2099" />
           <input type="number" name="year_high" placeholder="To year"   min="1900" max="2099" />
         </div>
-      </div>
-
-      <div class="form-group" id="langGroup">
-        <label for="lang">Google Scholar region <span class="hint">(optional)</span></label>
-        <input type="text" id="lang" name="lang"
-               placeholder="where are you? e.g. fr, en.."
-               maxlength="5" autocomplete="off" />
       </div>
 
       <button type="submit" id="submitBtn">
@@ -349,32 +342,31 @@
   <script>
     // ── Source toggle ──────────────────────────────────────────────
     const SOURCES = {
-      scholar: {
-        perPage: 10,
-        maxPages: 30,
-        hint: "10 results / page",
-        note: "Each page takes 8 to 15 seconds. 30 pages can take up to 6 minutes.<br>Keep this tab open until the download starts.",
+      semanticscholar: {
+        perPage: 25,
+        maxPages: 40,
+        hint: "25 results / page",
+        note: "Semantic Scholar is API-based, results arrive quickly.<br>-PS : Result columns separated by 'commas'-",
       },
       openalex: {
         perPage: 25,
         maxPages: 40,
         hint: "25 results / page",
-        note: "OpenAlex is API-based results arrive quickly.<br>-PS : Result columns seperated by 'commas'-",
+        note: "OpenAlex is API-based, results arrive quickly.<br>-PS : Result columns separated by 'commas'-",
       },
     };
 
-    let currentSource = "scholar";
+    let currentSource = "semanticscholar";
 
     function setSource(src) {
       currentSource = src;
       document.getElementById("source").value = src;
 
-      document.getElementById("btnScholar").classList.toggle("active", src === "scholar");
+      document.getElementById("btnSemantic").classList.toggle("active", src === "semanticscholar");
       document.getElementById("btnOpenalex").classList.toggle("active", src === "openalex");
 
-      document.getElementById("scholarBanner").style.display  = src === "scholar"  ? "block" : "none";
-      document.getElementById("openalexBanner").style.display = src === "openalex" ? "block" : "none";
-      document.getElementById("langGroup").style.display      = src === "scholar"  ? "block" : "none";
+      document.getElementById("semanticBanner").style.display  = src === "semanticscholar" ? "block" : "none";
+      document.getElementById("openalexBanner").style.display  = src === "openalex"        ? "block" : "none";
 
       const cfg    = SOURCES[src];
       const slider = document.getElementById("pages");
@@ -413,7 +405,7 @@
       titlesFeed.innerHTML       = "";
       btn.disabled               = true;
       spinner.style.display      = "block";
-      btnText.textContent        = currentSource === "openalex" ? "Fetching..." : "Scraping...";
+      btnText.textContent        = "Fetching...";
 
       const form   = e.target;
       const params = new URLSearchParams({
@@ -422,7 +414,6 @@
         pages:     form.pages.value,
         year_low:  form.year_low.value,
         year_high: form.year_high.value,
-        lang:      currentSource === "scholar" ? (form.lang ? form.lang.value.trim() : "") : "",
       });
 
       const perPage = SOURCES[currentSource].perPage;
@@ -434,7 +425,7 @@
         if (data.type === "paper") {
           const pct = Math.round((data.count / (data.total * perPage)) * 100);
           progressBar.style.width   = pct + "%";
-          progressLabel.textContent = `Page ${data.page} of ${data.total}  —  ${data.count} papers fetched`;
+          progressLabel.textContent = `Page ${data.page} of ${data.total} - ${data.count} papers fetched`;
           titlesFeed.textContent    = data.title;
         }
 

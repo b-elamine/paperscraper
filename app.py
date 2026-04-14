@@ -7,6 +7,7 @@ from flask import Flask, Response, render_template, request, jsonify, stream_wit
 
 from scraper import run_scrape, scrape_pages as scholar_scrape_pages
 from openalex_scraper import scrape_pages as openalex_scrape_pages, parse_results as openalex_parse_results
+from semanticscholar_scraper import scrape_pages as semantic_scrape_pages, parse_results as semantic_parse_results, RateLimitError
 
 app = Flask(__name__)
 
@@ -37,6 +38,13 @@ def scrape_stream():
     if source == "openalex":
         return Response(
             stream_with_context(_stream_openalex(keywords, pages, year_low, year_high)),
+            mimetype="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    if source == "semanticscholar":
+        return Response(
+            stream_with_context(_stream_semantic(keywords, pages, year_low, year_high)),
             mimetype="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
@@ -89,7 +97,7 @@ def _stream_openalex(keywords, pages, year_low, year_high):
                 all_results.append(record)
                 index += 1
                 yield f"data: {json.dumps({'type': 'paper', 'page': page_num, 'total': pages, 'title': record['title'], 'count': len(all_results)})}\n\n"
-            # SSE keepalive comment — prevents proxies from closing the idle connection
+            # SSE keepalive comment - prevents proxies from closing the idle connection
             # while the next page is being fetched from the OpenAlex API
             yield ": keepalive\n\n"
 
@@ -106,6 +114,37 @@ def _stream_openalex(keywords, pages, year_low, year_high):
         safe_name = keywords.replace(" ", "_")[:40]
         yield f"data: {json.dumps({'type': 'done', 'csv': csv_b64, 'filename': f'openalex_{safe_name}.csv', 'count': len(all_results)})}\n\n"
 
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'message': f'Scraping failed: {e}'})}\n\n"
+
+
+def _stream_semantic(keywords, pages, year_low, year_high):
+    all_results = []
+    index = 1
+    try:
+        for page_num, papers, total in semantic_scrape_pages(keywords, pages, year_low, year_high):
+            records = semantic_parse_results({"data": papers}, index)
+            for record in records:
+                all_results.append(record)
+                index += 1
+                yield f"data: {json.dumps({'type': 'paper', 'page': page_num, 'total': pages, 'title': record['title'], 'count': len(all_results)})}\n\n"
+            yield ": keepalive\n\n"
+
+        if not all_results:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'No results found. Try different keywords or a wider year range.'})}\n\n"
+            return
+
+        output = io.StringIO()
+        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(all_results)
+        csv_b64   = base64.b64encode(output.getvalue().encode()).decode()
+        safe_name = keywords.replace(" ", "_")[:40]
+        yield f"data: {json.dumps({'type': 'done', 'csv': csv_b64, 'filename': f'semantic_{safe_name}.csv', 'count': len(all_results)})}\n\n"
+
+    except RateLimitError:
+        yield f"data: {json.dumps({'type': 'error', 'message': 'Semantic Scholar rate limit hit. Wait about a minute and try again.'})}\n\n"
     except Exception as e:
         yield f"data: {json.dumps({'type': 'error', 'message': f'Scraping failed: {e}'})}\n\n"
 
