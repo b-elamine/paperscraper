@@ -3,5 +3,5 @@ services:
     name: papers-scraper
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 120 --workers 2
+    startCommand: gunicorn app:app --worker-class gevent --workers 2 --timeout 120
     plan: free
