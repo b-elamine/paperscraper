@@ -150,4 +150,4 @@ def _stream_semantic(keywords, pages, year_low, year_high):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)

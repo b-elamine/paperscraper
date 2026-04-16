@@ -74,7 +74,6 @@
       border-radius: 8px;
       padding: 0.65rem 0.9rem;
       font-size: 0.8rem;
-      margin-bottom: 1.25rem;
       line-height: 1.5;
     }
 
@@ -268,6 +267,48 @@
     }
 
     .signature a:hover { text-decoration: underline; }
+
+    @media (max-width: 520px) {
+      .banner-wrap { display: none; }
+
+      body {
+        padding: 0;
+        align-items: flex-start;
+      }
+
+      .card {
+        border-radius: 0;
+        box-shadow: none;
+        padding: 1.5rem 1.25rem;
+        min-height: 100svh;
+      }
+
+      .source-toggle button {
+        font-size: 0.78rem;
+        padding: 0.45rem 0.2rem;
+      }
+
+      .pages-value {
+        min-width: auto;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+
+      .row {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        font-size: 1rem;
+      }
+
+      button[type="submit"] {
+        padding: 0.85rem;
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -281,15 +322,15 @@
       <button type="button" id="btnScholar"              onclick="setSource('scholar')">Google Scholar</button>
     </div>
 
-    <!-- OpenAlex info -->
-    <div class="banner safe" id="openalexBanner" style="display:block">
-      open API, 250M+ papers across all fields, no issues.
-    </div>
-
-    <!-- Google Scholar info -->
-    <div class="banner warning" id="scholarBanner" style="display:none">
-      this one scrapes Google directly so it needs a small pause between pages (8-12s).
-      40 pages takes around 7 minutes. if it gets blocked, wait 30 min and retry.
+    <!-- banner area: fixed height so switching sources never shifts the layout -->
+    <div class="banner-wrap" style="position:relative; min-height:3.5rem; margin-bottom:1.25rem">
+      <div class="banner safe" id="openalexBanner" style="display:block; margin-bottom:0">
+        open API, 250M+ papers across all fields, no issues.
+      </div>
+      <div class="banner warning" id="scholarBanner" style="display:none; margin-bottom:0">
+        this one scrapes Google directly so it needs a small pause between pages (8-12s).
+        40 pages takes around 7 minutes. if it gets blocked, wait 30 min and retry.
+      </div>
     </div>
 
     <form id="scrapeForm">
@@ -319,7 +360,7 @@
         </div>
       </div>
 
-      <div class="form-group" id="langGroup" style="display:none">
+      <div class="form-group" id="langGroup" style="opacity:0;pointer-events:none">
         <label for="lang">Your region / language <span class="hint">(optional)</span></label>
         <input type="text" id="lang" name="lang" maxlength="5"
                placeholder="e.g. fr  ·  en  ·  ar  ·  de  ·  zh  ·  where are you searching from?" />
@@ -380,7 +421,9 @@
 
       document.getElementById("openalexBanner").style.display = src === "openalex" ? "block" : "none";
       document.getElementById("scholarBanner").style.display  = src === "scholar"  ? "block" : "none";
-      document.getElementById("langGroup").style.display      = src === "scholar"  ? "block" : "none";
+      const lg = document.getElementById("langGroup");
+      lg.style.opacity       = src === "scholar" ? "1"    : "0";
+      lg.style.pointerEvents = src === "scholar" ? "auto" : "none";
 
       const cfg    = SOURCES[src];
       const slider = document.getElementById("pages");
