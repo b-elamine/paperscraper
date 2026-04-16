@@ -1,68 +1,64 @@
 # Papers Scraper
 
-A tool to search academic papers by keyword and export the results as a CSV. It supports three sources: **Semantic Scholar**, **OpenAlex**, and **Google Scholar** (CLI only). You can use it from a web interface or straight from the command line.
+search academic papers by keyword and get a CSV with title, authors, year, venue, URL and abstract.
 
-All sources give you the same output format: title, authors, year, venue, URL, and abstract.
-
----
-
-## Web Interface
-
-If you don't want to touch the terminal, the hosted version is at:
-
-```
-https://papers-scraping.onrender.com/
-```
-
-Pick your source (Semantic Scholar or OpenAlex), enter your keywords, set a year range if you want, and hit the button. The CSV downloads automatically when it's done.
-
-> Hosted on Render free tier, it may take ~30 seconds to wake up on the first request.
+two ways to use it: the web interface or the command line. sources depend on which one you pick.
 
 ---
 
-## Command Line
+## Web interface
 
-### Setup (run once)
+hosted at:
 
-```bash
-bash setup.sh
+```
+https://paperpull.app/
 ```
 
-Creates a `.venv` and installs everything.
+two sources available in the UI:
 
-### Activate the environment
+- **OpenAlex** - open API, 250M+ papers, fast and reliable
+- **Google Scholar** - actual scraping, slower but hits Scholar directly. goes at 8-12s per page to avoid blocks, so 40 pages takes around 7 minutes. if Google blocks it, just wait 30 min and retry. you can also set a language code (fr, en, ar...) to tune the results to your region.
+
+pick your source, type your keywords, set a year range if you want, hit search. CSV downloads automatically when done. works on mobile too.
+
+> if Google Scholar gets blocked on the hosted version, it is because the server IP is shared. running it locally on your own machine works much better for Scholar, see below.
+
+---
+
+## Command line
+
+three sources available in the CLI: `scholar`, `openalex`, `semanticscholar`.
+
+### setup (run once)
 
 ```bash
+./setup.sh
 source .venv/bin/activate
 ```
 
----
-
-### CLI usage
-
-All three sources go through the same script. Use `-s` to pick one:
+### usage
 
 ```bash
-python web-scraper.py -s semanticscholar -k "your keywords" -p <pages>
-python web-scraper.py -s openalex        -k "your keywords" -p <pages>
 python web-scraper.py -s scholar         -k "your keywords" -p <pages>
+python web-scraper.py -s openalex        -k "your keywords" -p <pages>
+python web-scraper.py -s semanticscholar -k "your keywords" -p <pages>
 ```
 
-Default source is `semanticscholar` if you leave out `-s`.
+default source is `semanticscholar` if you leave out `-s`.
 
-| Argument | Required | Description | Default |
+| argument | required | description | default |
 |---|---|---|---|
-| `-s` / `--source` | No | `semanticscholar`, `openalex`, or `scholar` | `semanticscholar` |
-| `-k` / `--keywords` | Yes | Search query | |
-| `-p` / `--pages` | No | Pages to fetch (25 results/page, 10 for Scholar) | `10` |
-| `--year-low` | No | Filter from this year | |
-| `--year-high` | No | Filter up to this year | |
-| `--lang` | No | Scholar only: language code (e.g. `fr`, `en`) | auto-detected |
-| `-o` / `--output` | No | Output CSV filename | `<source>_results.csv` |
-| `--min-delay` | No | Scholar only: min seconds between pages | `3` |
-| `--max-delay` | No | Scholar only: max seconds between pages | `6` |
+| `-s` / `--source` | no | `scholar`, `openalex`, or `semanticscholar` | `semanticscholar` |
+| `-k` / `--keywords` | yes | search query | |
+| `-p` / `--pages` | no | pages to fetch (25 results/page, 10 for Scholar) | `10` |
+| `--year-low` | no | filter from this year | |
+| `--year-high` | no | filter up to this year | |
+| `--lang` | no | Scholar only: 2-letter language code (fr, en, ar...) | auto-detected |
+| `-o` / `--output` | no | output CSV filename | `<source>_results.csv` |
+| `--min-delay` | no | Scholar only: min seconds between pages | `8` |
+| `--max-delay` | no | Scholar only: max seconds between pages | `12` |
 
-**Examples:**
+**examples:**
 
 ```bash
 # Semantic Scholar, 10 pages (~250 results)
@@ -71,38 +67,44 @@ python web-scraper.py -k "machine learning" -p 10
 # OpenAlex with a year range
 python web-scraper.py -s openalex -k "deep learning" -p 10 --year-low 2020 --year-high 2024
 
-# Google Scholar, force French language
-python web-scraper.py -s scholar -k "sobriété informatique" -p 5 --lang fr
+# Google Scholar in French
+python web-scraper.py -s scholar -k "sobriete informatique" -p 5 --lang fr
 
-# Save to a custom file
-python web-scraper.py -s semanticscholar -k "network security" -p 5 -o results.csv
+# save to a specific file
+python web-scraper.py -s openalex -k "network security" -p 5 -o results.csv
 ```
 
-> **Heads up (Scholar only):** Google Scholar is web scraping. Google can flag requests, serve a CAPTCHA, or block the server temporarily. If that happens, wait 30 to 60 minutes and try again. Avoid hammering too many pages at once.
+> Scholar scrapes Google directly so it can get blocked. if that happens wait 30 min and try again with fewer pages. running it locally on a home connection works much better than on a server.
 
 ---
 
-## Output format
-
-All sources produce the same CSV columns:
-
-| Column | Description |
-|---|---|
-| `index` | Row number |
-| `title` | Paper title |
-| `authors` | Authors (semicolon-separated) |
-| `year` | Publication year |
-| `venue` | Journal or conference name |
-| `url` | Link to the paper |
-| `abstract` | Abstract excerpt (up to 300 characters) |
-
----
-
-## Run the web app locally
+## run locally
 
 ```bash
 source .venv/bin/activate
 python app.py
 ```
 
-Then open `http://127.0.0.1:5000`.
+opens at `http://127.0.0.1:5000`. to make it accessible on your local network (phone, other machines):
+
+```bash
+python app.py  # already binds to 0.0.0.0
+```
+
+then access it at `http://<your-local-ip>:5000` from any device on the same network.
+
+---
+
+## output format
+
+all sources produce the same CSV columns:
+
+| column | description |
+|---|---|
+| `index` | row number |
+| `title` | paper title |
+| `authors` | authors (semicolon-separated) |
+| `year` | publication year |
+| `venue` | journal or conference name |
+| `url` | link to the paper |
+| `abstract` | abstract excerpt (up to 300 characters) |
