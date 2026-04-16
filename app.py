@@ -34,6 +34,7 @@ def scrape_stream():
 
     year_low  = int(year_low)  if year_low  else None
     year_high = int(year_high) if year_high else None
+    lang      = get_lang(request.args.get("lang", ""))
 
     if source == "openalex":
         return Response(
@@ -49,7 +50,6 @@ def scrape_stream():
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
-    lang = get_lang(request.args.get("lang", ""))
     return Response(
         stream_with_context(_stream_scholar(keywords, pages, lang, year_low, year_high)),
         mimetype="text/event-stream",

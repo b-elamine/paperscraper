@@ -1,22 +1,9 @@
 import locale
 import random
-import re
 import time
-from urllib.parse import urlencode
 
-import requests
-from bs4 import BeautifulSoup
-
-
-BASE_URL = "https://scholar.google.com/scholar"
-
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
-]
+from scholarly import scholarly
+import scholarly._scholarly as _sch
 
 
 def detect_lang():
@@ -28,114 +15,89 @@ def detect_lang():
         return "en"
 
 
-def build_url(keywords, page, lang, year_low=None, year_high=None):
-    params = {
-        "q":      keywords,
-        "hl":     lang,
-        "as_sdt": "0,5",
-        "start":  page * 10,
+
+def _pub_to_record(pub):
+    bib     = pub.get("bib", {})
+    authors = bib.get("author", "N/A")
+    if isinstance(authors, list):
+        authors = ", ".join(authors)
+    elif not authors:
+        authors = "N/A"
+
+    year    = bib.get("pub_year", "N/A") or "N/A"
+    venue   = bib.get("venue",    "N/A") or "N/A"
+    url     = pub.get("pub_url",  "N/A") or "N/A"
+    abstract = (bib.get("abstract", "") or "")[:300]
+
+    return {
+        "title":    bib.get("title", "N/A") or "N/A",
+        "authors":  authors,
+        "year":     str(year),
+        "venue":    venue,
+        "url":      url,
+        "abstract": abstract,
     }
-    if year_low:
-        params["as_ylo"] = year_low
-    if year_high:
-        params["as_yhi"] = year_high
-    return f"{BASE_URL}?{urlencode(params)}"
-
-
-def fetch_page(url, session, retries=3, base_wait=10):
-    headers = {
-        "User-Agent":      random.choice(USER_AGENTS),
-        "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection":      "keep-alive",
-        "DNT":             "1",
-    }
-    for attempt in range(1, retries + 1):
-        response = session.get(url, headers=headers, timeout=15)
-        if response.status_code == 429:
-            if attempt == retries:
-                raise RuntimeError("Google has temporarily blocked this server. Please wait 30 to 60 minutes and try again.")
-            wait = base_wait * attempt + random.uniform(0, 5)
-            time.sleep(wait)
-            continue
-        response.raise_for_status()
-        return response.text
-
-
-def parse_page(html):
-    soup = BeautifulSoup(html, "html.parser")
-
-    if soup.find("form", {"action": re.compile(r"sorry")}):
-        raise RuntimeError("Google returned a CAPTCHA. Wait 20–30 minutes and retry.")
-
-    results = []
-    for item in soup.select("div.gs_r.gs_or.gs_scl"):
-        title_tag = item.select_one("h3.gs_rt a")
-        if title_tag:
-            title = title_tag.get_text(strip=True)
-            url   = title_tag.get("href", "N/A")
-        else:
-            title_tag = item.select_one("h3.gs_rt")
-            title = title_tag.get_text(strip=True) if title_tag else "N/A"
-            url   = "N/A"
-
-        meta_tag = item.select_one("div.gs_a")
-        authors, venue, year = "N/A", "N/A", "N/A"
-        if meta_tag:
-            meta  = meta_tag.get_text(separator=" ", strip=True)
-            parts = [p.strip() for p in meta.split(" - ")]
-            if parts:
-                authors = parts[0]
-            if len(parts) >= 2:
-                venue_year  = parts[1]
-                year_match  = re.search(r"\b(19|20)\d{2}\b", venue_year)
-                if year_match:
-                    year  = year_match.group(0)
-                    venue = venue_year.replace(year, "").strip(" ,")
-                else:
-                    venue = venue_year
-
-        abstract_tag = item.select_one("div.gs_rs")
-        abstract = abstract_tag.get_text(strip=True) if abstract_tag else ""
-
-        results.append({
-            "title":    title,
-            "authors":  authors,
-            "year":     year,
-            "venue":    venue,
-            "url":      url,
-            "abstract": abstract[:300],
-        })
-
-    return results
 
 
 def scrape_pages(keywords, pages, lang=None, year_low=None, year_high=None,
-                 min_delay=8.0, max_delay=15.0):
+                 min_delay=8.0, max_delay=12.0):
     """
-    Generator that scrapes one page at a time and yields (page_num, records).
-    Delay happens AFTER yielding so the caller can send data before waiting.
+    Generator that yields (page_num, records) one page at a time.
+
+    Uses the scholarly library for proper browser fingerprinting.
+    Delay happens AFTER yielding so the caller can stream data before waiting.
+
+    For sessions longer than ~15 pages on a cloud/server IP, call
+    setup_free_proxies() before this function to enable IP rotation.
+
+    Delays are intentionally 20-35 s, shorter delays trigger blocks.
     """
-    if not lang:
-        lang = detect_lang()
+    # Patch scholarly's hardcoded hl=en to respect the user's language
+    hl = lang if lang else "en"
+    _sch._PUBSEARCH = f"/scholar?hl={hl}&q={{0}}"
 
-    session = requests.Session()
+    search_iter = scholarly.search_pubs(
+        keywords,
+        patents=False,          # exclude patents for academic use
+        year_low=year_low,
+        year_high=year_high,
+    )
 
-    for page in range(pages):
-        url     = build_url(keywords, page, lang, year_low, year_high)
-        html    = fetch_page(url, session)
-        records = parse_page(html)
-        if not records:
-            return
-        yield page + 1, records
-        # Delay after yielding, before next page
-        if page < pages - 1:
-            time.sleep(random.uniform(min_delay, max_delay))
+    page_num = 0
+    batch    = []
+
+    try:
+        for pub in search_iter:
+            batch.append(_pub_to_record(pub))
+
+            if len(batch) == 10:
+                page_num += 1
+                yield page_num, batch
+                batch = []
+
+                if page_num >= pages:
+                    return
+
+                # Wait between pages, this is critical to avoid blocks.
+                # The sleep happens BEFORE scholarly fetches the next page.
+                time.sleep(random.uniform(min_delay, max_delay))
+
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "captcha" in msg or "blocked" in msg or "too many" in msg or "429" in msg:
+            raise RuntimeError(
+                "Google Scholar has blocked this IP. "
+                "Wait 30–60 minutes and try again with fewer pages."
+            ) from exc
+        raise
+
+    # Yield any partial last page (fewer than 10 results, end of results)
+    if batch and page_num < pages:
+        yield page_num + 1, batch
 
 
 def run_scrape(keywords, pages, lang=None, year_low=None, year_high=None,
-               min_delay=8.0, max_delay=15.0):
+               min_delay=8.0, max_delay=12.0):
     all_results = []
     index       = 1
     for _, records in scrape_pages(keywords, pages, lang, year_low, year_high,

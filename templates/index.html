@@ -172,6 +172,13 @@
     button[type="submit"]:hover:not(:disabled) { background: #4338ca; }
     button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
 
+    .field-hint {
+      font-size: 0.78rem;
+      color: #9ca3af;
+      margin-top: 0.35rem;
+      line-height: 1.4;
+    }
+
     .spinner {
       display: none;
       width: 18px;
@@ -270,24 +277,23 @@
 
     <!-- Source selector -->
     <div class="source-toggle">
-      <button type="button" id="btnSemantic" class="active" onclick="setSource('semanticscholar')">Semantic Scholar</button>
-      <button type="button" id="btnOpenalex"               onclick="setSource('openalex')">OpenAlex</button>
-    </div>
-
-    <!-- Semantic Scholar info -->
-    <div class="banner safe" id="semanticBanner" style="display:block">
-      <strong>Safe to use:</strong> Semantic Scholar fetches data from a free, open API.
-      200M+ papers, no scraping, no rate limits, no risk of being blocked.
+      <button type="button" id="btnOpenalex" class="active" onclick="setSource('openalex')">OpenAlex</button>
+      <button type="button" id="btnScholar"              onclick="setSource('scholar')">Google Scholar</button>
     </div>
 
     <!-- OpenAlex info -->
-    <div class="banner safe" id="openalexBanner">
-      <strong>Safe to use:</strong> OpenAlex fetches data from a free, open API.
-      250M+ papers across all academic fields.
+    <div class="banner safe" id="openalexBanner" style="display:block">
+      open API, 250M+ papers across all fields, no issues.
+    </div>
+
+    <!-- Google Scholar info -->
+    <div class="banner warning" id="scholarBanner" style="display:none">
+      this one scrapes Google directly so it needs a small pause between pages (8-12s).
+      40 pages takes around 7 minutes. if it gets blocked, wait 30 min and retry.
     </div>
 
     <form id="scrapeForm">
-      <input type="hidden" id="source" name="source" value="semanticscholar" />
+      <input type="hidden" id="source" name="source" value="openalex" />
 
       <div class="form-group">
         <label for="keywords">Keywords <span class="hint">(required)</span></label>
@@ -313,6 +319,13 @@
         </div>
       </div>
 
+      <div class="form-group" id="langGroup" style="display:none">
+        <label for="lang">Your region / language <span class="hint">(optional)</span></label>
+        <input type="text" id="lang" name="lang" maxlength="5"
+               placeholder="e.g. fr  ·  en  ·  ar  ·  de  ·  zh  ·  where are you searching from?" />
+        <p class="field-hint">2-letter code, same as your browser language setting.</p>
+      </div>
+
       <button type="submit" id="submitBtn">
         <span class="spinner" id="spinner"></span>
         <span id="btnText">Search &amp; Download CSV</span>
@@ -330,8 +343,8 @@
     <div class="status" id="status"></div>
 
     <p class="note" id="note">
-      8 to 15 seconds per page<br>
-      -PS : Result columns seperated by 'commas'-.
+      OpenAlex is API-based, results arrive fast.<br>
+      -PS : Result columns separated by 'commas'-.
     </p>
 
     <p class="signature">
@@ -342,31 +355,32 @@
   <script>
     // ── Source toggle ──────────────────────────────────────────────
     const SOURCES = {
-      semanticscholar: {
-        perPage: 25,
-        maxPages: 40,
-        hint: "25 results / page",
-        note: "Semantic Scholar is API-based, results arrive quickly.<br>-PS : Result columns separated by 'commas'-",
-      },
       openalex: {
         perPage: 25,
         maxPages: 40,
         hint: "25 results / page",
-        note: "OpenAlex is API-based, results arrive quickly.<br>-PS : Result columns separated by 'commas'-",
+        note: "OpenAlex is API-based, results arrive fast.<br>-PS : Result columns separated by 'commas'-",
+      },
+      scholar: {
+        perPage: 10,
+        maxPages: 40,
+        hint: "10 results / page",
+        note: "8 to 12 seconds per page (Google Scholar)<br>-PS : Result columns separated by 'commas'-",
       },
     };
 
-    let currentSource = "semanticscholar";
+    let currentSource = "openalex";
 
     function setSource(src) {
       currentSource = src;
       document.getElementById("source").value = src;
 
-      document.getElementById("btnSemantic").classList.toggle("active", src === "semanticscholar");
       document.getElementById("btnOpenalex").classList.toggle("active", src === "openalex");
+      document.getElementById("btnScholar").classList.toggle("active",  src === "scholar");
 
-      document.getElementById("semanticBanner").style.display  = src === "semanticscholar" ? "block" : "none";
-      document.getElementById("openalexBanner").style.display  = src === "openalex"        ? "block" : "none";
+      document.getElementById("openalexBanner").style.display = src === "openalex" ? "block" : "none";
+      document.getElementById("scholarBanner").style.display  = src === "scholar"  ? "block" : "none";
+      document.getElementById("langGroup").style.display      = src === "scholar"  ? "block" : "none";
 
       const cfg    = SOURCES[src];
       const slider = document.getElementById("pages");
@@ -414,6 +428,7 @@
         pages:     form.pages.value,
         year_low:  form.year_low.value,
         year_high: form.year_high.value,
+        lang:      form.lang.value.trim().toLowerCase().slice(0, 2),
       });
 
       const perPage = SOURCES[currentSource].perPage;
@@ -458,7 +473,16 @@
           progressFeed.style.display = "none";
           status.className     = "status error";
           status.style.display = "block";
-          status.textContent   = `Error: ${data.message}`;
+
+          if (currentSource === "scholar") {
+            status.innerHTML = `Google blocked the request. this happens when the server gets too busy or too many searches run at the same time.`
+              + `<br><br>you can run it locally on your machine instead, it works much better that way.`
+              + ` everything you need is in the `
+              + `<a href="https://github.com/b-elamine/papers-scraper" target="_blank" rel="noopener" style="color:inherit;font-weight:700">README on GitHub</a>.`
+              + `<br><br>or just wait 30 min and try again with fewer pages.`;
+          } else {
+            status.textContent = `Error: ${data.message}`;
+          }
 
           btn.disabled          = false;
           spinner.style.display = "none";

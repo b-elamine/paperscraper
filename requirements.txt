@@ -3,3 +3,4 @@ beautifulsoup4>=4.12
 flask>=3.0
 gunicorn>=21.2
 gevent>=24.2
+scholarly>=1.7
