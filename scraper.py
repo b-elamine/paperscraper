@@ -20,7 +20,7 @@ def _pub_to_record(pub):
     bib     = pub.get("bib", {})
     authors = bib.get("author", "N/A")
     if isinstance(authors, list):
-        authors = ", ".join(authors)
+        authors = "; ".join(authors)
     elif not authors:
         authors = "N/A"
 
@@ -29,13 +29,19 @@ def _pub_to_record(pub):
     url     = pub.get("pub_url",  "N/A") or "N/A"
     abstract = (bib.get("abstract", "") or "")[:300]
 
+    num_citations = pub.get("num_citations")
+    citation_count = int(num_citations) if num_citations is not None else None
+
     return {
-        "title":    bib.get("title", "N/A") or "N/A",
-        "authors":  authors,
-        "year":     str(year),
-        "venue":    venue,
-        "url":      url,
-        "abstract": abstract,
+        "title":                bib.get("title", "N/A") or "N/A",
+        "authors":              authors,
+        "year":                 str(year),
+        "venue":                venue,
+        "url":                  url,
+        "abstract":             abstract,
+        "citation_count":       citation_count,
+        "reference_count":      None,
+        "influential_citations": None,
     }
 
 

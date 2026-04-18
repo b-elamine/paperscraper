@@ -6,7 +6,7 @@ API_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 class RateLimitError(Exception):
     pass
 PER_PAGE = 25
-FIELDS = "title,authors,year,abstract,venue,externalIds,openAccessPdf"
+FIELDS = "title,authors,year,abstract,venue,externalIds,openAccessPdf,citationCount,referenceCount,influentialCitationCount"
 
 
 def fetch_page(keywords, offset, year_low=None, year_high=None):
@@ -54,14 +54,21 @@ def parse_results(data, index_start):
 
         abstract = (paper.get("abstract") or "")[:300]
 
+        citation_count  = paper.get("citationCount")
+        reference_count = paper.get("referenceCount")
+        influential     = paper.get("influentialCitationCount")
+
         records.append({
-            "index":    index_start + i,
-            "title":    title,
-            "authors":  authors,
-            "year":     year,
-            "venue":    venue,
-            "url":      url,
-            "abstract": abstract,
+            "index":                 index_start + i,
+            "title":                 title,
+            "authors":               authors,
+            "year":                  year,
+            "venue":                 venue,
+            "url":                   url,
+            "abstract":              abstract,
+            "citation_count":        int(citation_count) if citation_count is not None else None,
+            "reference_count":       int(reference_count) if reference_count is not None else None,
+            "influential_citations": int(influential) if influential is not None else None,
         })
     return records
 

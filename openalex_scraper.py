@@ -20,7 +20,7 @@ def fetch_page(keywords, page, year_low=None, year_high=None):
         "search":   keywords,
         "per-page": PER_PAGE,
         "page":     page,
-        "select":   "title,authorships,publication_year,primary_location,doi,abstract_inverted_index",
+        "select":   "title,authorships,publication_year,primary_location,doi,abstract_inverted_index,cited_by_count,referenced_works_count",
     }
     if year_low or year_high:
         low  = year_low  or 1900
@@ -59,14 +59,20 @@ def parse_results(data, index_start):
 
         abstract = reconstruct_abstract(work.get("abstract_inverted_index"))[:300]
 
+        cited_by = work.get("cited_by_count")
+        ref_count = work.get("referenced_works_count")
+
         records.append({
-            "index":    index_start + i,
-            "title":    title,
-            "authors":  authors,
-            "year":     year,
-            "venue":    venue,
-            "url":      url,
-            "abstract": abstract,
+            "index":                 index_start + i,
+            "title":                 title,
+            "authors":               authors,
+            "year":                  year,
+            "venue":                 venue,
+            "url":                   url,
+            "abstract":              abstract,
+            "citation_count":        int(cited_by) if cited_by is not None else None,
+            "reference_count":       int(ref_count) if ref_count is not None else None,
+            "influential_citations": None,
         })
     return records
 

@@ -73,7 +73,7 @@ def _stream_scholar(keywords, pages, lang, year_low, year_high):
             return
 
         output = io.StringIO()
-        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
+        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract", "citation_count", "reference_count", "influential_citations"]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(all_results)
@@ -106,7 +106,7 @@ def _stream_openalex(keywords, pages, year_low, year_high):
             return
 
         output = io.StringIO()
-        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
+        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract", "citation_count", "reference_count", "influential_citations"]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(all_results)
@@ -135,7 +135,7 @@ def _stream_semantic(keywords, pages, year_low, year_high):
             return
 
         output = io.StringIO()
-        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract"]
+        fieldnames = ["index", "title", "authors", "year", "venue", "url", "abstract", "citation_count", "reference_count", "influential_citations"]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(all_results)
