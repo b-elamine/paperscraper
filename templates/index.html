@@ -9,52 +9,41 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f4f6f9;
+      background: #f8fafc;
+      color: #111827;
+      padding: 1.5rem 1rem 5rem;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
     }
 
-    .card {
+    .container { max-width: 940px; margin: 0 auto; }
+
+    /* ── Brand ── */
+    .brand    { font-size: 1.2rem; font-weight: 800; color: #1a1a2e; }
+    .tagline  { font-size: 0.78rem; color: #9ca3af; margin-top: 0.1rem; margin-bottom: 1.25rem; }
+
+    /* ── Form card ── */
+    .form-card {
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 560px;
+      padding: 1.1rem 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-bottom: 1rem;
     }
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 0.25rem;
-    }
-
-    .subtitle {
-      font-size: 0.875rem;
-      color: #6b7280;
-      margin-bottom: 1.5rem;
-    }
-
-    /* Source toggle */
     .source-toggle {
-      display: flex;
+      display: inline-flex;
       background: #f3f4f6;
-      border-radius: 8px;
-      padding: 4px;
-      margin-bottom: 1.5rem;
-      gap: 4px;
+      border-radius: 7px;
+      padding: 3px;
+      gap: 2px;
+      margin-bottom: 0.85rem;
     }
 
     .source-toggle button {
-      flex: 1;
-      padding: 0.5rem;
+      padding: 0.35rem 0.9rem;
       border: none;
-      border-radius: 6px;
-      font-size: 0.875rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       background: transparent;
@@ -65,123 +54,58 @@
     .source-toggle button.active {
       background: #fff;
       color: #1a1a2e;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    /* Warning banner */
-    .banner {
-      display: none;
-      border-radius: 8px;
-      padding: 0.65rem 0.9rem;
-      font-size: 0.8rem;
-      line-height: 1.5;
-    }
-
-    .banner strong { font-weight: 700; }
-
-    .banner.safe {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #166534;
-    }
-
-    .banner.warning {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      color: #92400e;
-    }
-
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-
-    label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #374151;
-      margin-bottom: 0.4rem;
-    }
-
-    label .hint {
-      font-weight: 400;
-      color: #9ca3af;
+    /* Main row: keywords + button */
+    .search-row {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
     }
 
     input[type="text"],
     input[type="number"] {
       width: 100%;
-      padding: 0.6rem 0.85rem;
-      border: 1px solid #d1d5db;
+      padding: 0.55rem 0.8rem;
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: #111827;
-      transition: border-color 0.15s;
       outline: none;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input:focus {
       border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+      box-shadow: 0 0 0 3px rgba(79,70,229,0.08);
     }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
+    .keywords-input { flex: 1; }
 
-    .pages-row {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .pages-row input[type="range"] {
-      flex: 1;
-      accent-color: #4f46e5;
-    }
-
-    .pages-value {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #4f46e5;
-      min-width: 11rem;
-      text-align: right;
-    }
-
-    button[type="submit"] {
-      width: 100%;
-      padding: 0.75rem;
+    .submit-btn {
+      padding: 0.55rem 1.3rem;
       background: #4f46e5;
       color: #fff;
       border: none;
       border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.875rem;
+      font-weight: 700;
       cursor: pointer;
-      margin-top: 0.5rem;
-      transition: background 0.15s;
+      white-space: nowrap;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      transition: background 0.15s;
     }
 
-    button[type="submit"]:hover:not(:disabled) { background: #4338ca; }
-    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
-
-    .field-hint {
-      font-size: 0.78rem;
-      color: #9ca3af;
-      margin-top: 0.35rem;
-      line-height: 1.4;
-    }
+    .submit-btn:hover:not(:disabled) { background: #4338ca; }
+    .submit-btn:disabled { background: #a5b4fc; cursor: not-allowed; }
 
     .spinner {
       display: none;
-      width: 18px;
-      height: 18px;
+      width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,0.4);
       border-top-color: #fff;
       border-radius: 50%;
@@ -190,361 +114,511 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .status {
-      margin-top: 1.25rem;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.875rem;
-      display: none;
+    /* Options row: pages + year range + lang */
+    .options-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    .status.info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-    .status.error   { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .pages-group {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+      flex: 1;
+      min-width: 170px;
+    }
 
-    .progress-feed {
+    .pages-group input[type="range"] { flex: 1; accent-color: #4f46e5; }
+
+    .pages-val { font-weight: 700; color: #4f46e5; font-size: 0.8rem; white-space: nowrap; }
+
+    .year-group { display: flex; gap: 0.4rem; }
+    .year-group input[type="number"] { width: 96px; }
+
+    #langWrap { display: none; }
+    #langWrap input { width: 130px; }
+
+    /* ── Error banner ── */
+    .error-banner {
       display: none;
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .error-banner a { color: #b91c1c; font-weight: 700; }
+
+    /* ── Results card ── */
+    .results-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+
+    /* thin progress bar at top */
+    .progress-track { height: 3px; background: #ede9fe; }
+    .progress-fill  { height: 3px; background: #4f46e5; width: 0%; transition: width 0.4s ease; }
+
+    /* results toolbar */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid #f3f4f6;
+      min-height: 44px;
+      gap: 0.75rem;
+    }
+
+    .results-status { font-size: 0.8rem; color: #6b7280; font-weight: 500; }
+    .results-status strong { color: #111827; }
+
+    .dl-btn {
+      display: none;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.8rem;
       background: #f0fdf4;
       border: 1px solid #bbf7d0;
-      border-radius: 8px;
-    }
-
-    .progress-feed .progress-bar-wrap {
-      width: 100%;
-      background: #d1fae5;
-      border-radius: 99px;
-      height: 6px;
-      margin-bottom: 0.6rem;
-      overflow: hidden;
-    }
-
-    .progress-feed .progress-bar {
-      height: 6px;
-      background: #16a34a;
-      border-radius: 99px;
-      width: 0%;
-      transition: width 0.4s ease;
-    }
-
-    .progress-feed .progress-label {
-      font-size: 0.78rem;
-      font-weight: 600;
+      border-radius: 6px;
       color: #15803d;
-      margin-bottom: 0.5rem;
-    }
-
-    .titles-feed {
-      font-size: 0.72rem;
-      color: #166534;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 0.25rem;
-      min-height: 1.1em;
-    }
-
-    .note {
-      margin-top: 1.5rem;
-      font-size: 0.78rem;
-      color: #9ca3af;
-      text-align: center;
-      line-height: 1.5;
-    }
-
-    .signature {
-      margin-top: 1rem;
-      font-size: 0.78rem;
-      color: #9ca3af;
-      text-align: center;
-    }
-
-    .signature a {
-      color: #4f46e5;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
       text-decoration: none;
-      font-weight: 600;
+      transition: background 0.15s;
+      white-space: nowrap;
     }
 
-    .signature a:hover { text-decoration: underline; }
+    .dl-btn:hover { background: #dcfce7; }
 
-    @media (max-width: 520px) {
-      .banner-wrap { display: none; }
+    /* empty state */
+    .empty-state {
+      padding: 3.5rem 1rem;
+      text-align: center;
+      color: #9ca3af;
+    }
 
-      body {
-        padding: 0;
-        align-items: flex-start;
+    .empty-state svg { width: 38px; height: 38px; margin-bottom: 0.6rem; }
+    .empty-state p { font-size: 0.82rem; }
+
+    /* ── Table ── */
+    .table-scroll { overflow-x: auto; display: none; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    /* column widths */
+    .col-num   { width: 42px; }
+    .col-title { /* fills remaining */ }
+    .col-year  { width: 62px; }
+    .col-cites { width: 88px; }
+    .col-venue { width: 155px; }
+
+    thead th {
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #fafafa;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: color 0.12s;
+    }
+
+    thead th:hover { color: #4f46e5; }
+    thead th.sorted { color: #4f46e5; }
+    .col-cites { text-align: right !important; }
+
+    tbody td {
+      padding: 0.6rem 0.75rem;
+      font-size: 0.84rem;
+      border-bottom: 1px solid #f9fafb;
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafafa; }
+
+    .td-num { color: #d1d5db; font-size: 0.72rem; padding-top: 0.8rem !important; }
+
+    .td-title a {
+      color: #111827;
+      text-decoration: none;
+      font-weight: 500;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .td-title a:hover { color: #4f46e5; text-decoration: underline; }
+    .td-title .no-link { color: #111827; font-weight: 500; line-height: 1.4; }
+
+    /* shown only on mobile — year · citations · venue below title */
+    .row-meta {
+      display: none;
+      font-size: 0.72rem;
+      color: #9ca3af;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .td-year  { color: #6b7280; font-size: 0.8rem; white-space: nowrap; }
+    .td-venue { color: #6b7280; font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .td-cites       { font-weight: 600; text-align: right; white-space: nowrap; }
+    .td-cites.empty { color: #d1d5db; font-weight: 400; }
+
+    /* ── Mobile ── */
+    @media (max-width: 620px) {
+      body { padding: 1rem 0.75rem 4rem; }
+
+      /* Form: stack everything */
+      .search-row { flex-wrap: wrap; }
+      .keywords-input { min-width: 0; }
+      .submit-btn { width: 100%; justify-content: center; order: 10; }
+
+      .options-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .pages-group { min-width: 0; }
+      .year-group  { justify-content: space-between; }
+      .year-group input[type="number"] { width: calc(50% - 0.2rem); }
+      #langWrap input { width: 100%; }
+
+      /* Table → cards */
+      table { table-layout: auto; }
+      thead { display: none; }
+      tbody tr { display: block; }
+      tbody td { display: block; padding: 0; border: none; overflow: visible; white-space: normal; }
+      .td-num   { display: none; }
+      .td-year, .td-cites, .td-venue { display: none; }
+      .td-title {
+        padding: 0.85rem 1rem !important;
+        border-bottom: 1px solid #f3f4f6;
       }
-
-      .card {
-        border-radius: 0;
-        box-shadow: none;
-        padding: 1.5rem 1.25rem;
-        min-height: 100svh;
+      tbody tr:last-child .td-title { border-bottom: none; }
+      .td-title a, .td-title .no-link {
+        -webkit-line-clamp: unset;
+        display: block;
+        overflow: visible;
       }
-
-      .source-toggle button {
-        font-size: 0.78rem;
-        padding: 0.45rem 0.2rem;
-      }
-
-      .pages-value {
-        min-width: auto;
-        font-size: 0.85rem;
-        white-space: nowrap;
-      }
-
-      .row {
-        grid-template-columns: 1fr;
-        gap: 0.65rem;
-      }
-
-      input[type="text"],
-      input[type="number"] {
-        font-size: 1rem;
-      }
-
-      button[type="submit"] {
-        padding: 0.85rem;
-        font-size: 1rem;
-      }
+      .row-meta { display: block; }
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Papers Scraper</h1>
-    <p class="subtitle">Search academic papers and download results as a CSV file.</p>
+  <div class="container">
 
-    <!-- Source selector -->
-    <div class="source-toggle">
-      <button type="button" id="btnOpenalex" class="active" onclick="setSource('openalex')">OpenAlex</button>
-      <button type="button" id="btnScholar"              onclick="setSource('scholar')">Google Scholar</button>
-    </div>
+    <div class="brand">Papers Scraper</div>
+    <p class="tagline">Search academic papers and export to CSV.</p>
 
-    <!-- banner area: fixed height so switching sources never shifts the layout -->
-    <div class="banner-wrap" style="position:relative; min-height:3.5rem; margin-bottom:1.25rem">
-      <div class="banner safe" id="openalexBanner" style="display:block; margin-bottom:0">
-        open API, 250M+ papers across all fields, no issues.
-      </div>
-      <div class="banner warning" id="scholarBanner" style="display:none; margin-bottom:0">
-        this one scrapes Google directly so it needs a small pause between pages (8-12s).
-        40 pages takes around 7 minutes. if it gets blocked, wait 30 min and retry.
-      </div>
-    </div>
-
-    <form id="scrapeForm">
-      <input type="hidden" id="source" name="source" value="openalex" />
-
-      <div class="form-group">
-        <label for="keywords">Keywords <span class="hint">(required)</span></label>
-        <input type="text" id="keywords" name="keywords"
-               placeholder="e.g. secure deployment, machine learning"
-               required autocomplete="off" />
+    <div class="form-card">
+      <div class="source-toggle">
+        <button type="button" id="btnOpenalex" class="active" onclick="setSource('openalex')">OpenAlex</button>
+        <button type="button" id="btnScholar"               onclick="setSource('scholar')">Google Scholar</button>
       </div>
 
-      <div class="form-group">
-        <label for="pages">Pages to scrape <span class="hint" id="perPageHint">(10 results / page)</span></label>
-        <div class="pages-row">
-          <input type="range" id="pages" name="pages" min="1" max="30" value="5"
-                 oninput="updatePagesLabel()" />
-          <span class="pages-value" id="pagesVal">5 pages (~50 results)</span>
+      <form id="scrapeForm">
+        <div class="search-row">
+          <input class="keywords-input" type="text" id="keywords"
+                 placeholder="Keywords, e.g. machine learning" required autocomplete="off" />
+          <button type="submit" class="submit-btn" id="submitBtn">
+            <span class="spinner" id="spinner"></span>
+            <span id="btnText">Search</span>
+          </button>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label>Year range <span class="hint">(optional)</span></label>
-        <div class="row">
-          <input type="number" name="year_low"  placeholder="From year" min="1900" max="2099" />
-          <input type="number" name="year_high" placeholder="To year"   min="1900" max="2099" />
+        <div class="options-row">
+          <div class="pages-group">
+            <span>Pages</span>
+            <input type="range" id="pages" min="1" max="40" value="5" oninput="updatePages()" />
+            <span class="pages-val" id="pagesVal">~125</span>
+          </div>
+          <div class="year-group">
+            <input type="number" id="yearLow"  placeholder="From year" min="1900" max="2099" />
+            <input type="number" id="yearHigh" placeholder="To year"   min="1900" max="2099" />
+          </div>
+          <div id="langWrap">
+            <input type="text" id="lang" placeholder="Language: en, fr, ar…" maxlength="5" />
+          </div>
         </div>
-      </div>
-
-      <div class="form-group" id="langGroup" style="opacity:0;pointer-events:none">
-        <label for="lang">Your region / language <span class="hint">(optional)</span></label>
-        <input type="text" id="lang" name="lang" maxlength="5"
-               placeholder="e.g. fr  ·  en  ·  ar  ·  de  ·  zh  ·  where are you searching from?" />
-        <p class="field-hint">2-letter code, same as your browser language setting.</p>
-      </div>
-
-      <button type="submit" id="submitBtn">
-        <span class="spinner" id="spinner"></span>
-        <span id="btnText">Search &amp; Download CSV</span>
-      </button>
-    </form>
-
-    <div class="progress-feed" id="progressFeed">
-      <div class="progress-bar-wrap">
-        <div class="progress-bar" id="progressBar"></div>
-      </div>
-      <div class="progress-label" id="progressLabel">Starting...</div>
-      <div class="titles-feed" id="titlesFeed"></div>
+      </form>
     </div>
 
-    <div class="status" id="status"></div>
+    <div class="error-banner" id="errorBanner"></div>
 
-    <p class="note" id="note">
-      OpenAlex is API-based, results arrive fast.<br>
-      -PS : Result columns separated by 'commas'-.
-    </p>
+    <div class="results-card">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
 
-    <p class="signature">
-      made by <a href="https://github.com/b-elamine" target="_blank" rel="noopener">b-elamine</a>
-    </p>
+      <div class="results-bar">
+        <span class="results-status" id="resultsStatus">Run a search to see results.</span>
+        <button class="dl-btn" id="dlBtn">⬇ Download CSV</button>
+      </div>
+
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+        </svg>
+        <p>Results will appear here as they load.</p>
+      </div>
+
+      <div class="table-scroll" id="tableScroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-title" onclick="sortBy('title')">
+                Title <span id="si-title"></span>
+              </th>
+              <th class="col-year" onclick="sortBy('year')">
+                Year <span id="si-year"></span>
+              </th>
+              <th class="col-cites" style="text-align:right" onclick="sortBy('citations')">
+                Citations <span id="si-citations"></span>
+              </th>
+              <th class="col-venue" onclick="sortBy('venue')">
+                Venue <span id="si-venue"></span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    // ── Source toggle ──────────────────────────────────────────────
     const SOURCES = {
-      openalex: {
-        perPage: 25,
-        maxPages: 40,
-        hint: "25 results / page",
-        note: "OpenAlex is API-based, results arrive fast.<br>-PS : Result columns separated by 'commas'-",
-      },
-      scholar: {
-        perPage: 10,
-        maxPages: 40,
-        hint: "10 results / page",
-        note: "8 to 12 seconds per page (Google Scholar)<br>-PS : Result columns separated by 'commas'-",
-      },
+      openalex: { perPage: 25, maxPages: 40 },
+      scholar:  { perPage: 10, maxPages: 40 },
     };
-
     let currentSource = "openalex";
+    let papers = [];
+    let sortKey = null, sortDir = 1;
+    let savedCsv = null, savedFilename = null;
 
+    // ── Source ─────────────────────────────────────────────────────
     function setSource(src) {
       currentSource = src;
-      document.getElementById("source").value = src;
-
       document.getElementById("btnOpenalex").classList.toggle("active", src === "openalex");
       document.getElementById("btnScholar").classList.toggle("active",  src === "scholar");
-
-      document.getElementById("openalexBanner").style.display = src === "openalex" ? "block" : "none";
-      document.getElementById("scholarBanner").style.display  = src === "scholar"  ? "block" : "none";
-      const lg = document.getElementById("langGroup");
-      lg.style.opacity       = src === "scholar" ? "1"    : "0";
-      lg.style.pointerEvents = src === "scholar" ? "auto" : "none";
-
-      const cfg    = SOURCES[src];
+      document.getElementById("langWrap").style.display = src === "scholar" ? "block" : "none";
       const slider = document.getElementById("pages");
-      slider.max   = cfg.maxPages;
-      if (parseInt(slider.value) > cfg.maxPages) slider.value = cfg.maxPages;
-
-      document.getElementById("perPageHint").textContent = cfg.hint;
-      document.getElementById("note").innerHTML          = cfg.note;
-      updatePagesLabel();
+      slider.max = SOURCES[src].maxPages;
+      if (+slider.value > SOURCES[src].maxPages) slider.value = SOURCES[src].maxPages;
+      updatePages();
     }
 
-    function updatePagesLabel() {
-      const val = document.getElementById("pages").value;
-      const perPage = SOURCES[currentSource].perPage;
-      document.getElementById("pagesVal").textContent =
-        `${val} pages (~${val * perPage} results)`;
+    function updatePages() {
+      const v = +document.getElementById("pages").value;
+      document.getElementById("pagesVal").textContent = `~${v * SOURCES[currentSource].perPage}`;
     }
 
-    // ── Form submit ────────────────────────────────────────────────
-    document.getElementById("scrapeForm").addEventListener("submit", (e) => {
+    // ── Sort ───────────────────────────────────────────────────────
+    const SORT_KEYS = ["title", "year", "citations", "venue"];
+
+    function sortBy(key) {
+      sortDir = sortKey === key ? -sortDir : 1;
+      sortKey = key;
+      SORT_KEYS.forEach(k => {
+        document.getElementById(`si-${k}`).textContent = "";
+        document.querySelector(`th.col-${k === "citations" ? "cites" : k === "title" ? "title" : k}`)
+          ?.classList.remove("sorted");
+      });
+      const thMap = { title: "col-title", year: "col-year", citations: "col-cites", venue: "col-venue" };
+      document.querySelector(`th.${thMap[key]}`).classList.add("sorted");
+      document.getElementById(`si-${key}`).textContent = sortDir === 1 ? " ↑" : " ↓";
+      renderAll();
+    }
+
+    function sorted() {
+      if (!sortKey) return papers;
+      return [...papers].sort((a, b) => {
+        let av = a[sortKey], bv = b[sortKey];
+        if (sortKey === "citations" || sortKey === "year") {
+          av = av == null ? -Infinity : +av;
+          bv = bv == null ? -Infinity : +bv;
+          return (av - bv) * sortDir;
+        }
+        av = (av || "").toLowerCase();
+        bv = (bv || "").toLowerCase();
+        return (av < bv ? -1 : av > bv ? 1 : 0) * sortDir;
+      });
+    }
+
+    // ── Render ─────────────────────────────────────────────────────
+    function esc(s) {
+      return String(s ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function makeRow(p, i) {
+      const cite = p.citations != null ? Number(p.citations).toLocaleString() : null;
+      const metaParts = [p.year, cite ? `${cite} citations` : null, p.venue].filter(Boolean);
+      const titleEl = (p.url && p.url !== "N/A")
+        ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.title)}</a>`
+        : `<span class="no-link">${esc(p.title)}</span>`;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="td-num">${i}</td>
+        <td class="td-title">
+          ${titleEl}
+          <div class="row-meta">${metaParts.map(esc).join(" · ")}</div>
+        </td>
+        <td class="td-year">${esc(p.year || "—")}</td>
+        <td class="td-cites ${cite ? "" : "empty"}">${cite ?? "—"}</td>
+        <td class="td-venue">${esc(p.venue || "—")}</td>
+      `;
+      return tr;
+    }
+
+    function renderAll() {
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+      sorted().forEach((p, i) => tbody.appendChild(makeRow(p, i + 1)));
+    }
+
+    function appendRow(p) {
+      document.getElementById("tbody").appendChild(makeRow(p, papers.length));
+    }
+
+    // ── Form ───────────────────────────────────────────────────────
+    document.getElementById("scrapeForm").addEventListener("submit", e => {
       e.preventDefault();
 
-      const btn          = document.getElementById("submitBtn");
-      const spinner      = document.getElementById("spinner");
-      const btnText      = document.getElementById("btnText");
-      const status       = document.getElementById("status");
-      const progressFeed = document.getElementById("progressFeed");
-      const progressBar  = document.getElementById("progressBar");
-      const progressLabel= document.getElementById("progressLabel");
-      const titlesFeed   = document.getElementById("titlesFeed");
+      papers = []; sortKey = null; sortDir = 1;
+      savedCsv = null; savedFilename = null;
+      SORT_KEYS.forEach(k => document.getElementById(`si-${k}`).textContent = "");
 
-      status.style.display       = "none";
-      progressFeed.style.display = "block";
-      progressBar.style.width    = "0%";
-      progressLabel.textContent  = "Connecting...";
-      titlesFeed.innerHTML       = "";
-      btn.disabled               = true;
-      spinner.style.display      = "block";
-      btnText.textContent        = "Fetching...";
+      const btn      = document.getElementById("submitBtn");
+      const spinner  = document.getElementById("spinner");
+      const btnText  = document.getElementById("btnText");
+      const fill     = document.getElementById("progressFill");
+      const status   = document.getElementById("resultsStatus");
+      const dlBtn    = document.getElementById("dlBtn");
+      const errBanner= document.getElementById("errorBanner");
+      const empty    = document.getElementById("emptyState");
+      const tScroll  = document.getElementById("tableScroll");
 
-      const form   = e.target;
+      errBanner.style.display = "none";
+      dlBtn.style.display     = "none";
+      empty.style.display     = "block";
+      tScroll.style.display   = "none";
+      fill.style.width        = "0%";
+      status.innerHTML        = "Connecting…";
+      document.getElementById("tbody").innerHTML = "";
+
+      btn.disabled = true;
+      spinner.style.display = "block";
+      btnText.textContent   = "Fetching…";
+
+      const keywords = document.getElementById("keywords").value.trim();
+      const pages    = document.getElementById("pages").value;
+      const yearLow  = document.getElementById("yearLow").value;
+      const yearHigh = document.getElementById("yearHigh").value;
+      const lang     = (document.getElementById("lang")?.value || "").trim().toLowerCase().slice(0, 2);
+
       const params = new URLSearchParams({
-        source:    currentSource,
-        keywords:  form.keywords.value.trim(),
-        pages:     form.pages.value,
-        year_low:  form.year_low.value,
-        year_high: form.year_high.value,
-        lang:      form.lang.value.trim().toLowerCase().slice(0, 2),
+        source: currentSource, keywords, pages,
+        year_low: yearLow, year_high: yearHigh, lang,
       });
 
       const perPage = SOURCES[currentSource].perPage;
       const es = new EventSource(`/scrape-stream?${params}`);
 
-      es.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+      es.onmessage = ev => {
+        const d = JSON.parse(ev.data);
 
-        if (data.type === "paper") {
-          const pct = Math.round((data.count / (data.total * perPage)) * 100);
-          progressBar.style.width   = pct + "%";
-          progressLabel.textContent = `Page ${data.page} of ${data.total} - ${data.count} papers fetched`;
-          titlesFeed.textContent    = data.title;
-        }
+        if (d.type === "paper") {
+          const pct = Math.min(99, Math.round((d.count / (d.total * perPage)) * 100));
+          fill.style.width   = pct + "%";
+          status.innerHTML   = `Page <strong>${d.page}</strong>/${d.total} &mdash; <strong>${d.count}</strong> papers`;
 
-        else if (data.type === "done") {
-          es.close();
-          progressBar.style.width   = "100%";
-          progressLabel.textContent = `Done! ${data.count} results collected.`;
-          titlesFeed.innerHTML      = "";
+          const p = { title: d.title, year: d.year, citations: d.citations, venue: d.venue, url: d.url };
+          papers.push(p);
 
-          const csvBytes = atob(data.csv);
-          const blob     = new Blob([csvBytes], { type: "text/csv" });
-          const url      = URL.createObjectURL(blob);
-          const link     = document.createElement("a");
-          link.href      = url;
-          link.download  = data.filename;
-          link.click();
-          URL.revokeObjectURL(url);
-
-          status.className     = "status success";
-          status.style.display = "block";
-          status.textContent   = `${data.count} papers saved to "${data.filename}".`;
-
-          btn.disabled          = false;
-          spinner.style.display = "none";
-          btnText.textContent   = "Search & Download CSV";
-        }
-
-        else if (data.type === "error") {
-          es.close();
-          progressFeed.style.display = "none";
-          status.className     = "status error";
-          status.style.display = "block";
-
-          if (currentSource === "scholar") {
-            status.innerHTML = `Google blocked the request. this happens when the server gets too busy or too many searches run at the same time.`
-              + `<br><br>you can run it locally on your machine instead, it works much better that way.`
-              + ` everything you need is in the `
-              + `<a href="https://github.com/b-elamine/papers-scraper" target="_blank" rel="noopener" style="color:inherit;font-weight:700">README on GitHub</a>.`
-              + `<br><br>or just wait 30 min and try again with fewer pages.`;
-          } else {
-            status.textContent = `Error: ${data.message}`;
+          if (empty.style.display !== "none") {
+            empty.style.display  = "none";
+            tScroll.style.display = "block";
           }
 
-          btn.disabled          = false;
+          if (!sortKey) appendRow(p);
+          else renderAll();
+        }
+
+        else if (d.type === "done") {
+          es.close();
+          fill.style.width = "100%";
+          status.innerHTML = `<strong>${d.count}</strong> papers`;
+
+          savedCsv      = d.csv;
+          savedFilename = d.filename;
+          dlBtn.style.display = "flex";
+          dlBtn.onclick = () => triggerDownload(savedCsv, savedFilename);
+
+          btn.disabled = false;
           spinner.style.display = "none";
-          btnText.textContent   = "Search & Download CSV";
+          btnText.textContent   = "Search";
+        }
+
+        else if (d.type === "error") {
+          es.close();
+          fill.style.width        = "0%";
+          status.textContent      = "Error";
+          errBanner.style.display = "block";
+          errBanner.innerHTML     = currentSource === "scholar"
+            ? `Google blocked the request. Wait 30 min or <a href="https://github.com/b-elamine/papers-scraper" target="_blank" rel="noopener">run locally</a>.`
+            : esc(d.message);
+
+          btn.disabled = false;
+          spinner.style.display = "none";
+          btnText.textContent   = "Search";
         }
       };
 
       es.onerror = () => {
         es.close();
-        progressFeed.style.display = "none";
-        status.className     = "status error";
-        status.style.display = "block";
-        status.textContent   = "Connection lost. Check your internet connection and try again.";
+        fill.style.width        = "0%";
+        status.textContent      = "Connection lost";
+        errBanner.style.display = "block";
+        errBanner.textContent   = "Connection lost. Check your internet and try again.";
 
-        btn.disabled          = false;
+        btn.disabled = false;
         spinner.style.display = "none";
-        btnText.textContent   = "Search & Download CSV";
+        btnText.textContent   = "Search";
       };
     });
+
+    function triggerDownload(b64, filename) {
+      const blob = new Blob([atob(b64)], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
