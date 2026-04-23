@@ -334,6 +334,7 @@
     <div class="form-card">
       <div class="source-toggle">
         <button type="button" id="btnOpenalex" class="active" onclick="setSource('openalex')">OpenAlex</button>
+        <button type="button" id="btnSemantic"               onclick="setSource('semanticscholar')">Semantic Scholar</button>
         <button type="button" id="btnScholar"               onclick="setSource('scholar')">Google Scholar</button>
       </div>
 
@@ -410,8 +411,9 @@
 
   <script>
     const SOURCES = {
-      openalex: { perPage: 25, maxPages: 40 },
-      scholar:  { perPage: 10, maxPages: 40 },
+      openalex:        { perPage: 25, maxPages: 40 },
+      semanticscholar: { perPage: 25, maxPages: 40 },
+      scholar:         { perPage: 10, maxPages: 40 },
     };
     let currentSource = "openalex";
     let papers = [];
@@ -422,6 +424,7 @@
     function setSource(src) {
       currentSource = src;
       document.getElementById("btnOpenalex").classList.toggle("active", src === "openalex");
+      document.getElementById("btnSemantic").classList.toggle("active", src === "semanticscholar");
       document.getElementById("btnScholar").classList.toggle("active",  src === "scholar");
       document.getElementById("langWrap").style.display = src === "scholar" ? "block" : "none";
       const slider = document.getElementById("pages");

@@ -2,8 +2,12 @@ import csv
 import io
 import json
 import base64
+import os
 
+from dotenv import load_dotenv
 from flask import Flask, Response, render_template, request, jsonify, stream_with_context
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from scraper import run_scrape, scrape_pages as scholar_scrape_pages
 from openalex_scraper import scrape_pages as openalex_scrape_pages, parse_results as openalex_parse_results

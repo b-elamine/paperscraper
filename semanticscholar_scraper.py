@@ -1,7 +1,12 @@
+import os
 import time
 import requests
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 API_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
+_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY", "")
 
 class RateLimitError(Exception):
     pass
@@ -22,6 +27,8 @@ def fetch_page(keywords, offset, year_low=None, year_high=None):
         params["year"] = f"{low}-{high}"
 
     headers = {"User-Agent": "papers-scraper/1.0"}
+    if _API_KEY:
+        headers["x-api-key"] = _API_KEY
     try:
         response = requests.get(API_URL, params=params, headers=headers, timeout=20)
         if response.status_code == 429:
